@@ -1565,6 +1565,10 @@ def build_Penthouse(cx, cz, FY, hname):
 # single-unit owner house (excluded from complexes & PRICES)
 assert os.environ.get("WITH_PENTHOUSE", "1") == "1"
 
+# HILLS=1 (default): north complexes (Castle, Mansion rows) sit on a stepped
+# hill; HILLS=0: flat world. Revert anytime:  HILLS=0 python generate_houses.py
+HILLS = os.environ.get("HILLS", "1") == "1"
+
 BUILDERS = [
     ("TinyHouse", build_TinyHouse, 0.5, 26),
     ("ZenHouse", build_ZenHouse, 2.5, 40),
@@ -1581,11 +1585,32 @@ UNITS = 5
 build_Penthouse(-140, 95, 0.5, "Penthouse")
 
 complex_names = []              # folder names, e.g. "Castle#3"
+hill_lift = {}                  # row index -> (dx, dz, lift)
 for base, fn, fy, pitch in BUILDERS:
-    row_z = 60 + 56 * [b[0] for b in BUILDERS].index(base)
+    ri = [b[0] for b in BUILDERS].index(base)
+    row_z = 60 + 56 * ri
+    if HILLS and ri >= 6:  # Castle (6), Mansion (7): hill terraces
+        hill_lift[ri] = (ri - 5) * 14
     for u in range(UNITS):
-        fn(-60 + u * pitch, row_z, fy, f"{base}#{u + 1}")
+        lift = hill_lift.get(ri, 0)
+        fn(-60 + u * pitch, row_z, fy + lift, f"{base}#{u + 1}")
         complex_names.append(f"{base}#{u + 1}")
+
+# hill under the north complexes: two terraces + access ramps (HILLS only)
+if HILLS:
+    for terr, (z0, lift) in enumerate(((396, 14), (452, 28))):
+        H("Shared", part(f"HillPlateau{terr}", (220, lift, 64),
+                         (0, lift / 2 - 0.5, z0), (98, 148, 78), GRASS))
+        H("Shared", part(f"HillSlope{terr}", (220, 1, 30), (0,
+                          lift / 2 - 1, z0 - 46), (98, 148, 78), GRASS,
+                          rotx=24))
+    # ramp roads up the front slopes
+    H("Shared", part("HillRoadRamp", (16, 0.4, 82), (-6, 7.2, 350), PATHC,
+                     COBBLE, rotx=15))
+    H("Shared", part("HillRoadRamp2", (16, 0.4, 82), (-6, 21.2, 406), PATHC,
+                     COBBLE, rotx=15))
+    H("Shared", part("HillRoadTop", (160, 0.4, 10), (0, 49.1, 490), PATHC,
+                     COBBLE))
 
 # roads: N-S spine west of all complexes + east-west lane to each row front
 ROAD = (PATHC, COBBLE)
