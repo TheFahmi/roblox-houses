@@ -10,6 +10,10 @@ local PRICES = {
 	Dome = 2500, VillaL = 3000, Castle = 5000, Mansion = 8000,
 }
 
+local function baseName(folderName)
+	return folderName:gsub("#%d+$", "")
+end
+
 -- DataStore persistence (works in published games; silent no-op in Studio
 -- unless "Enable Studio Access to API Services" is on)
 local store
@@ -75,7 +79,7 @@ end)
 local function houseFolders()
 	local out = {}
 	for _, folder in ipairs(workspace:GetChildren()) do
-		if folder:IsA("Folder") and PRICES[folder.Name] then
+		if folder:IsA("Folder") and PRICES[baseName(folder.Name)] then
 			table.insert(out, folder)
 		end
 	end
@@ -86,7 +90,7 @@ end
 for _, folder in ipairs(houseFolders()) do
 	local door = folder:FindFirstChild("Door", true)
 	if door and door:IsA("BasePart") then
-		local price = PRICES[folder.Name]
+		local price = PRICES[baseName(folder.Name)]
 		local sign = Instance.new("Part")
 		sign.Name = "SaleSign"
 		sign.Size = Vector3.new(0.6, 5, 0.6)
@@ -324,8 +328,9 @@ end)
 -- ================= courier job: route of house drop-offs =================
 -- Depot near spawn -> touch drop pad at each house in order -> route bonus.
 local PAID_PER_LEG = 15
-local ROUTE = { "TinyHouse", "AFrame", "ModernCube", "Castle", "Dome",
-	"VillaL", "Mansion", "ZenHouse" }
+-- one stop per complex: first unit of each type
+local ROUTE = { "TinyHouse#1", "ZenHouse#1", "AFrame#1", "ModernCube#1", "Dome#1",
+	"VillaL#1", "Castle#1", "Mansion#1" }
 local jobs = {} -- player -> current stop name
 
 local function makePart(name, size, pos, color)
