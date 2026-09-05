@@ -524,12 +524,12 @@ end)
 
 -- ================= drivable cars (replace static CarBody builds) ==========
 do
-	for _, folder in ipairs(workspace:GetChildren()) do
-		if not folder:IsA("Folder") then continue end
+	local function buildCar(folder)
 		local body = folder:FindFirstChild("CarBody", true)
-		local glass = folder:FindFirstChild("CarGlass", true)
 		local cabin = folder:FindFirstChild("CarCabin", true)
-		if not (body and cabin and body:IsA("BasePart")) then continue end
+		if not (body and cabin and body:IsA("BasePart")) then
+			return
+		end
 
 		-- remove static pieces; rebuild as a drivable Model at the same spot
 		local color = body.Color
@@ -691,56 +691,73 @@ do
 			end
 		end)
 	end
-end
 
--- ================= Penthouse elevator (F1 lobby / F2 suite / F3 roof) =====
-do
-	local folder = workspace:FindFirstChild("Penthouse")
-	local cab = folder and folder:FindFirstChild("ElevatorBase", true)
-	if cab then
-		local FLOORS = { 0.5, 12.5, 24.5 } -- FY of each level (pre-scale)
-		local SCALE = 1.75 -- must match generate_houses.py
-		local BASE_X, BASE_Z = cab.Position.X, cab.Position.Z
-		local floorY = 1
-		local moving = false
-
-		local function goTo(idx)
-			if moving or idx == floorY then return end
-			moving = true
-			local target = Vector3.new(BASE_X,
-				(FLOORS[idx] + 0.25) * SCALE, BASE_Z)
-			local dist = math.abs(target.Y - cab.Position.Y)
-			TweenService:Create(cab, TweenInfo.new(dist / 12,
-				Enum.EasingStyle.Sine, Enum.EasingDirection.InOut),
-				{ CFrame = CFrame.new(target) * (cab.CFrame
-					- cab.Position) }):Play()
-			task.delay(dist / 12 + 0.1, function()
-				floorY = idx
-				moving = false
-			end)
-		end
-
-		-- call buttons on shaft jambs, one per floor (F3 sits by the rails)
-		local folderPar = cab.Parent
-		for fl, fy in ipairs(FLOORS) do
-			local btn = Instance.new("Part")
-			btn.Name = "ElevatorCall" .. fl
-			btn.Size = Vector3.new(0.6, 1.2, 0.6)
-			btn.Color = Color3.fromRGB(212, 175, 55)
-			btn.Material = Enum.Material.Neon
-			btn.Anchored = true
-			btn.CFrame = CFrame.new(BASE_X + 2.85 * 1.75,
-				(fy + 2.2) * SCALE, BASE_Z - 3.5 * 1.75 - 0.5)
-			btn.Parent = folderPar
-			local click = Instance.new("ClickDetector")
-			click.MaxActivationDistance = 16
-			click.Parent = btn
-			click.MouseClick:Connect(function()
-				goTo(fl)
-			end)
+	for _, folder in ipairs(workspace:GetChildren()) do
+		if folder:IsA("Folder") and folder:FindFirstChild("CarBody", true) then
+			buildCar(folder)
 		end
 	end
 end
+
+-- ================= Penthouse elevator (F1 lobby / F2 suite / F3 roof) =====
+pcall(function()
+	local folder = workspace:FindFirstChild("Penthouse")
+	local cab = folder and folder:FindFirstChild("ElevatorBase", true)
+	assert(cab, "ElevatorBase not found")
+	local FLOORS = { 0.5, 12.5, 24.5 } -- FY of each level (pre-scale)
+	local SCALE = 1.75 -- must match generate_houses.py
+	local BASE_X, BASE_Z = cab.Position.X, cab.Position.Z
+	local floorY = 1
+	local moving = false
+
+	local function goTo(idx)
+		if moving or idx == floorY then return end
+		moving = true
+		local target = Vector3.new(BASE_X,
+			(FLOORS[idx] + 0.25) * SCALE, BASE_Z)
+		local dist = math.abs(target.Y - cab.Position.Y)
+		TweenService:Create(cab, TweenInfo.new(dist / 12,
+			Enum.EasingStyle.Sine, Enum.EasingDirection.InOut),
+			{ CFrame = CFrame.new(target) * (cab.CFrame
+				- cab.Position) }):Play()
+		task.delay(dist / 12 + 0.1, function()
+			floorY = idx
+			moving = false
+		end)
+	end
+
+	-- big call buttons on the shaft front, one per floor
+	local folderPar = cab.Parent
+	for fl, fy in ipairs(FLOORS) do
+		local btn = Instance.new("Part")
+		btn.Name = "ElevatorCall" .. fl
+		btn.Size = Vector3.new(1, 1.6, 1)
+		btn.Color = Color3.fromRGB(255, 200, 40)
+		btn.Material = Enum.Material.Neon
+		btn.Anchored = true
+		btn.CFrame = CFrame.new(BASE_X + 2.85 * 1.75,
+			(fy + 2.2) * SCALE, BASE_Z - 3.5 * 1.75 - 0.8)
+		btn.Parent = folderPar
+		local click = Instance.new("ClickDetector")
+		click.MaxActivationDistance = 25
+		click.Parent = btn
+		click.MouseClick:Connect(function()
+			goTo(fl)
+		end)
+	end
+
+	-- fallback: prompt inside the cab cycles to the next floor
+	local prompt = Instance.new("ProximityPrompt")
+	prompt.ObjectText = "Lift Penthouse"
+	prompt.ActionText = "Naik/Turun"
+	prompt.HoldDuration = 0.3
+	prompt.MaxActivationDistance = 12
+	prompt.Parent = cab
+	prompt.Triggered:Connect(function()
+		goTo(floorY % #FLOORS + 1)
+	end)
+	print("Penthouse elevator ready")
+end)
 
 -- ================= gates: swing open on approach, close after =================
 local gates = {}
