@@ -646,7 +646,7 @@ def f_lantern(h, x, z, y=0):
 # ================================================================ SHARED
 cx0 = 0
 
-H("Shared", part("Ground", (500, 1, 500), (0, -0.5, 70), (106, 160, 80), GRASS))
+H("Shared", part("Ground", (1000, 1, 1000), (0, -0.5, 70), (106, 160, 80), GRASS))
 H("Shared", part("Plaza", (60, 0.3, 40), (0, 0.15, 0), MARBLEC, MARBLE))
 
 # cobble main street X-axis at z=25
@@ -1417,17 +1417,17 @@ UNITS = 5
 
 complex_names = []              # folder names, e.g. "Castle#3"
 for base, fn, fy, pitch in BUILDERS:
-    row_z = -120 + 56 * [b[0] for b in BUILDERS].index(base)
+    row_z = 60 + 56 * [b[0] for b in BUILDERS].index(base)
     for u in range(UNITS):
         fn(-60 + u * pitch, row_z, fy, f"{base}#{u + 1}")
         complex_names.append(f"{base}#{u + 1}")
 
 # roads: N-S spine west of all complexes + east-west lane to each row front
 ROAD = (PATHC, COBBLE)
-ROW_ZS = [-120 + 56 * i for i in range(8)]
+ROW_ZS = [60 + 56 * i for i in range(8)]
 # spine x=-94 (west of every lot), z from -150 up past Mansion row
-for i in range(49):
-    H("Shared", part(f"RoadNS{i}", (9, 0.2, 9), (-94, 0.09, -150 + i * 9),
+for i in range(52):
+    H("Shared", part(f"RoadNS{i}", (9, 0.2, 9), (-94, 0.09, 20 + i * 9),
                      *ROAD))
 # one long lane in front of each complex (row_z - 28: clear of lots/fences,
 # touching the spine at its west end)
