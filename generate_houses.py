@@ -1324,9 +1324,9 @@ def build_Mansion(cx, cz, FY, hname):
               (225, 218, 200), SMOOTH))
     H(h, part("WallFrontROuter", (2.5, 22, 0.8), (cx + 16.75, FY + 11, cz - 12),
               (225, 218, 200), SMOOTH))
-    H(h, part("EntryGlassL", (8.25, 22, 0.4), (cx - 6.375, FY + 11, cz - 12),
+    H(h, part("EntryGlassL", (4.5, 22, 0.4), (cx - 5.75, FY + 11, cz - 12),
               GLASSC, GLASS, transparency=0.42))
-    H(h, part("EntryGlassR", (8.25, 22, 0.4), (cx + 6.375, FY + 11, cz - 12),
+    H(h, part("EntryGlassR", (4.5, 22, 0.4), (cx + 5.75, FY + 11, cz - 12),
               GLASSC, GLASS, transparency=0.42))
     # grand columns
     for px in (cx - 15, cx - 7, cx + 7, cx + 15):
@@ -1437,8 +1437,17 @@ def build_Penthouse(cx, cz, FY, hname):
         H(h, part(f"GlassR{fl}", (0.4, 10, 24), (cx + 14.6, wy, cz), GLASSC,
                   GLASS, transparency=0.4, cancollide=False))
         if not top:
-            H(h, part(f"GlassFront{fl}", (30, 11, 0.4), (cx, wy, cz - 13),
-                      GLASSC, GLASS, transparency=0.4))
+            if fl == 0:  # entrance level: 10-wide opening for the gold door
+                H(h, part(f"GlassFront{fl}L", (10, 11, 0.4), (cx - 10, wy,
+                          cz - 13), GLASSC, GLASS, transparency=0.4))
+                H(h, part(f"GlassFront{fl}R", (10, 11, 0.4), (cx + 10, wy,
+                          cz - 13), GLASSC, GLASS, transparency=0.4))
+                H(h, part(f"GlassFront{fl}Top", (10, 3, 0.4), (cx,
+                          FY + 9.5, cz - 13), GLASSC, GLASS,
+                          transparency=0.4))
+            else:
+                H(h, part(f"GlassFront{fl}", (30, 11, 0.4), (cx, wy,
+                          cz - 13), GLASSC, GLASS, transparency=0.4))
             H(h, part(f"GoldBeam{fl}", (30, 0.4, 0.4), (cx, FY + fl * 12
                       + 10.8, cz - 12.8), GOLD, FOIL, cancollide=False))
         else:
@@ -1476,7 +1485,11 @@ def build_Penthouse(cx, cz, FY, hname):
         # guard rails around shaft hole on upper slabs
         if fl > 0:
             ry = FY + fl * 12 + 0.2
-            f_railing(h, sx, ry, sz - 3.9, length=8, roty=0, color=GOLD)
+            # front edge split — center gap for the elevator cab opening
+            f_railing(h, sx - 2.9, ry, sz - 3.9, length=2.2, roty=0,
+                      color=GOLD)
+            f_railing(h, sx + 2.9, ry, sz - 3.9, length=2.2, roty=0,
+                      color=GOLD)
             f_railing(h, sx, ry, sz + 3.9, length=8, roty=0, color=GOLD)
             f_railing(h, sx - 3.9, ry, sz, length=8, roty=90, color=GOLD)
             f_railing(h, sx + 3.9, ry, sz, length=8, roty=90, color=GOLD)
