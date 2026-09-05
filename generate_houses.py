@@ -88,7 +88,7 @@ def H(house, xml):
 
 
 # ---------------------------------------------------------------- core part
-SCALE = 1.5  # world scale up: rooms sized for the character
+SCALE = 1.75  # world scale up: rooms sized for the character
 
 
 def part(name, size, pos, color, mat=PLASTIC, transparency=0.0,
@@ -461,9 +461,21 @@ def f_railing(h, x, y, z, length=8, roty=0, color=DARKWOOD):
                   roty=roty, cancollide=False))
 
 
-def f_door(h, x, y, z, w=4, hgt=7, color=GLASSC, roty=0):
-    H(h, part("Door", (w, hgt, 0.7), (x, y + hgt / 2, z), color, SMOOTH,
-              transparency=0.25, roty=roty))
+def f_door(h, x, y, z, w=4, hgt=7, color=DARKWOOD, roty=0):
+    """Framed door: side posts + lintel + solid panel with knob (Lua swings)."""
+    ca, sa = math.cos(math.radians(roty)), math.sin(math.radians(roty))
+    ox, oz = -sa * 0.35, -ca * 0.35  # trim sits proud of the wall face
+    for sx_ in (-1, 1):
+        H(h, part("DoorPost", (0.5, hgt + 0.3, 0.9),
+                  (x + sx_ * w / 2 * ca + ox, y + (hgt + 0.3) / 2,
+                   z + sx_ * w / 2 * sa + oz), DARKWOOD, WOOD, roty=roty))
+    H(h, part("DoorLintel", (w + 1, 0.5, 0.9), (x + ox, y + hgt + 0.25, z + oz),
+              DARKWOOD, WOOD, roty=roty))
+    H(h, part("Door", (w - 0.4, hgt - 0.3, 0.5), (x, y + (hgt - 0.3) / 2, z),
+              color, WOOD, roty=roty))
+    H(h, part("DoorKnob", (0.35, 0.35, 0.35), (x + (w / 2 - 0.6) * ca,
+              y + hgt / 2, z + (w / 2 - 0.6) * sa), GOLD, FOIL, shape=BALL,
+              cancollide=False))
 
 
 def f_window(h, x, y, z, w=4, hgt=4, roty=0, color=GLASSC, t=0.45):
@@ -682,7 +694,7 @@ H(h, part("GlassBackF2R", (6, 9, 0.4), (cx + 6, FY + 14.5, cz + 9), GLASSC,
           GLASS, transparency=0.42))
 for wx in (-6, 0, 6):
     f_window(h, cx + wx, FY + 14.5, cz - 9, w=4.5, hgt=6, t=0.42)
-f_door(h, cx, FY, cz - 9, w=8, hgt=8)
+f_door(h, cx, FY, cz - 9, w=8, hgt=7)
 
 # gold accent beam
 H(h, part("GoldBeamF1", (24, 0.3, 0.3), (cx, FY + 8.8, cz - 8.7), GOLD, FOIL,
@@ -693,12 +705,12 @@ H(h, part("GoldBeamF2", (24, 0.3, 0.3), (cx, FY + 18.8, cz + 8.7), GOLD, FOIL,
 # F1: living room
 f_rug(h, cx - 4, FY, cz - 1, 10, 8, (70, 80, 95), border=(40, 48, 60))
 f_sofa(h, cx - 5, FY, cz + 3, SOFA_NAVY)
-f_loveseat(h, cx - 10, FY, cz + 4.5, SOFA_NAVY, roty=180)
+f_loveseat(h, cx - 9.7, FY, cz + 4.5, SOFA_NAVY, roty=180)
 f_coffee_table(h, cx - 5, FY, cz - 1)
 f_tv(h, cx - 5, FY, cz - 8.2, roty=180, w=6)
 f_bookshelf(h, cx + 8.8, FY, cz + 4, roty=-90, w=8, hgt=7)
 f_floorlamp(h, cx - 10, FY, cz + 7)
-f_plant(h, cx + 10, FY, cz - 6, big=True)
+f_plant(h, cx + 9.3, FY, cz - 4.5, big=True)
 f_painting(h, cx - 11.5, FY + 5.5, cz + 4, roty=90, color=(40, 70, 120))
 f_painting(h, cx + 11.5, FY + 5.5, cz - 4, roty=-90, color=(120, 60, 40))
 
@@ -758,7 +770,7 @@ H(h, part("FrontGlassL", (3.5, 4, 0.4), (cx - 3.9, FY + 2.5, cz - 9.8),
           GLASSC, GLASS, transparency=0.5))
 H(h, part("FrontGlassR", (3.5, 4, 0.4), (cx + 3.9, FY + 2.5, cz - 9.8),
           GLASSC, GLASS, transparency=0.5))
-f_door(h, cx, FY, cz - 9.8, w=5, hgt=7, color=DARKWOOD)
+f_door(h, cx, FY, cz - 9.8, w=4.2, hgt=6.5, color=DARKWOOD)
 f_window(h, cx - 4.5, FY + 1.8, cz + 2, w=2.6, hgt=3.5, roty=90, t=0.5)
 f_window(h, cx + 4.5, FY + 1.8, cz - 2, w=2.6, hgt=3.5, roty=90, t=0.5)
 
@@ -775,9 +787,9 @@ f_sofa(h, cx - 3, FY, cz + 1.5, (110, 75, 55), roty=0)
 f_armchair(h, cx + 2, FY, cz - 1, (110, 75, 55), roty=-135)
 f_coffee_table(h, cx, FY, cz - 1, w=3.5, mat=WOOD, color=WOODC, leg=BRONZE)
 f_tv(h, cx, FY, cz - 9, roty=180, w=4)
-f_bookshelf(h, cx + 5.5, FY, cz + 3, roty=-90, w=5, hgt=6)
+f_bookshelf(h, cx + 3.3, FY, cz + 3, roty=-90, w=5, hgt=6)
 f_floorlamp(h, cx - 6.5, FY, cz - 5)
-f_plant(h, cx + 6.5, FY, cz - 4)
+f_plant(h, cx + 2.2, FY, cz - 5.5)
 f_dining(h, cx, FY, cz - 6, seats=4, w=4.5)
 f_chandelier(h, cx, FY + 13.6, cz, 0.8, tiers=1, bulbs_per=5)
 for bz in (-6, 0, 6):
@@ -786,7 +798,7 @@ for bz in (-6, 0, 6):
 
 # ground-floor bedroom nook (vaulted ceiling)
 f_bed(h, cx - 4, FY, cz + 5.8, roty=180, size=0.95, headcolor=MAHOGANY)
-f_nightstand(h, cx + 0.5, FY, cz + 7)
+f_nightstand(h, cx - 0.55, FY, cz + 7.5)
 f_rug(h, cx - 4, FY, cz + 4, 6, 5, (140, 90, 55))
 f_painting(h, cx - 7.6, FY + 5, cz + 4, roty=90, color=(70, 110, 70))
 
@@ -841,7 +853,7 @@ for i in range(4):
               STONE, COBBLE))
     H(h, part(f"CrenR{i}", (1, 1.6, 2), (cx + 13, FY + 12.8, cz - 9 + i * 6),
               STONE, COBBLE))
-f_door(h, cx, FY, cz - 11, w=8, hgt=8, color=DARKWOOD)
+f_door(h, cx, FY, cz - 11, w=7, hgt=7, color=DARKWOOD)
 for wx in (-9, 9):
     H(h, part(f"WinGlassF{wx}", (2.5, 4, 0.4), (cx + wx, FY + 8, cz - 11),
               GLASSC, GLASS, transparency=0.5, cancollide=False))
@@ -875,20 +887,28 @@ for px, pz, roty in ((-11, -8, 90), (11, -8, -90)):
               NEON, cancollide=False))
 f_plant(h, cx - 11, FY, cz + 2, big=True)
 f_plant(h, cx + 11, FY, cz + 2, big=True)
-f_bookshelf(h, cx - 12.2, FY, cz + 7, roty=90, w=7, hgt=9)
+f_bookshelf(h, cx - 11.2, FY, cz + 7, roty=90, w=7, hgt=9)
 f_painting(h, cx - 13.4, FY + 8, cz, roty=90, w=4, hgt=3, color=(70, 50, 110))
 f_painting(h, cx + 13.4, FY + 8, cz, roty=-90, w=4, hgt=3, color=(110, 70, 40))
 
-# tower: cylinder 3 floors + spiral stairs + cone top
+# tower: hollow ring of 12 wall panels, 3 floors, spiral stairs, cone top
 tx, tz = cx + 19, cz + 6
 H(h, part("TowerPad", (14, 0.5, 14), (tx, FY - 0.2, tz), STONE, COBBLE))
-H(h, part("TowerShaft", (24, 11, 11), (tx, FY + 12, tz), STONE, COBBLE,
-          shape=CYL, rotz=90))
-H(h, part("TowerFloor1", (0.5, 4, 4), (tx, FY + 6, tz), (200, 200, 205),
+TR_, TH_ = 5.5, 24  # tower radius / height
+for k in range(12):
+    a = math.radians(k * 30)
+    if k == 6:  # front sector = doorway (lintel fills above)
+        continue
+    H(h, part(f"TowerWall{k}", (3.0, TH_, 0.6),
+              (tx + TR_ * math.sin(a), FY + TH_ / 2, tz + TR_ * math.cos(a)),
+              STONE, COBBLE, roty=math.degrees(a) + 90))
+H(h, part("TowerLintel", (3.0, TH_ - 6, 0.6), (tx, FY + 6 + (TH_ - 6) / 2,
+          tz - TR_), STONE, COBBLE))
+H(h, part("TowerFloor1", (0.5, 7, 7), (tx, FY + 6, tz), (200, 200, 205),
           SLATE, shape=CYL, rotz=90))
-H(h, part("TowerFloor2", (0.5, 4, 4), (tx, FY + 12, tz), (200, 200, 205),
+H(h, part("TowerFloor2", (0.5, 7, 7), (tx, FY + 12, tz), (200, 200, 205),
           SLATE, shape=CYL, rotz=90))
-H(h, part("TowerFloor3", (0.5, 4, 4), (tx, FY + 18, tz), (200, 200, 205),
+H(h, part("TowerFloor3", (0.5, 7, 7), (tx, FY + 18, tz), (200, 200, 205),
           SLATE, shape=CYL, rotz=90))
 H(h, part("TowerCone", (13, 9, 13), (tx, FY + 28.5, tz), (70, 90, 140), SLATE,
           shape=BALL))
@@ -905,8 +925,8 @@ for fl in range(3):
         H(h, part(f"Spiral{fl}_{s}", (2.6, 0.4, 1.6),
                   (sx_, FY + fl * 6 + 0.7 + s * 0.53, sz_), (200, 200, 205),
                   SLATE, roty=math.degrees(a) + 90))
-H(h, part("TowerDoor", (4, 7, 0.6), (tx, FY + 3.5, tz - 5.3), DARKWOOD,
-          WOOD))
+H(h, part("TowerDoor", (2.6, 5.6, 0.4), (tx, FY + 2.8, tz - TR_ + 0.3),
+          DARKWOOD, WOOD))
 f_chandelier(h, tx, FY + 4.9, tz, 0.9, tiers=1, bulbs_per=5)
 f_chandelier(h, tx, FY + 10.5, tz, 0.9, tiers=1, bulbs_per=5)
 f_bed(h, tx, FY + 12.25, tz, round_=True, size=0.8, color=(180, 170, 160))
@@ -965,8 +985,8 @@ H(h, part("GlassB2Back", (10, 9, 0.4), (cx + 14.5, FY + 14.5, cz + 14), GLASSC,
           GLASS, transparency=0.42))
 H(h, part("WallB2Outer", (0.6, 9, 14), (cx + 19.5, FY + 14.5, cz + 7), WHITE,
           SMOOTH))
-f_door(h, cx - 3, FY, cz - 7, w=5, hgt=8)
-f_door(h, cx + 14.5, FY, cz, w=4, hgt=7, roty=0)
+f_door(h, cx - 3, FY, cz - 7, w=4.2, hgt=7)
+f_door(h, cx + 14.5, FY, cz, w=4, hgt=6.5, roty=0)
 H(h, part("GoldBeamA", (20, 0.3, 0.3), (cx, FY + 8.7, cz - 6.7), GOLD, FOIL,
           cancollide=False))
 H(h, part("GoldBeamA2", (20, 0.3, 0.3), (cx, FY + 18.7, cz - 6.7), GOLD, FOIL,
@@ -980,7 +1000,7 @@ f_tv(h, cx - 5, FY, cz - 6, roty=180, w=5)
 f_kitchen(h, cx + 5, FY, cz - 6, run=10)
 f_dining(h, cx + 5, FY, cz + 1, seats=6, w=6)
 f_chandelier(h, cx + 5, FY + 8.4, cz + 1, 1.0, tiers=2, bulbs_per=5)
-f_plant(h, cx - 9, FY, cz + 5, big=True)
+f_plant(h, cx + 9.5, FY, cz + 5.5, big=True)
 f_painting(h, cx - 9.6, FY + 5, cz - 2, roty=90, color=(200, 140, 60))
 
 # pool deck (front-left)
@@ -992,7 +1012,7 @@ H(h, part("PoolWater", (10.4, 1.05, 5.9), (cx - 6, FY + 0.6, cz - 13),
           POOL_WATER, GLASS, transparency=0.32))
 for lx in (cx - 11, cx - 1):
     f_lantern(h, lx, cz - 17, y=FY + 0.3)
-f_floorlamp(h, cx - 11, FY + 0.3, cz - 9.5)
+f_floorlamp(h, cx - 11, FY + 0.3, cz - 9)
 for i, lcx in enumerate((cx - 13.2, cx + 1.2)):
     H(h, part("LoungeChair", (2, 0.4, 5), (lcx, FY + 0.5,
               cz - 11), OFFWHITE, FABRIC, roty=90 + i * 180))
@@ -1054,19 +1074,19 @@ H(h, part("DomeRoof", (16.4, 16.4, 16.4), (cx, FY + 7.5, cz), GLASSC, GLASS,
           transparency=0.35, shape=BALL))
 H(h, part("ApexRing", (0.3, 2.8, 2.8), (cx, FY + 15.6, cz), WARM, NEON,
           shape=CYL, rotz=90, cancollide=False))
-f_door(h, cx, FY, cz - 8.2, w=6.9, hgt=6.5, color=GLASSC)
+f_door(h, cx, FY, cz - 8.2, w=5.5, hgt=6, color=GLASSC)
 f_chandelier(h, cx, FY + 12.6, cz, 1.0, tiers=1, bulbs_per=6)
 f_rug(h, cx, FY, cz, 12, 12, (90, 60, 110), border=(60, 40, 80))
 f_bed(h, cx, FY, cz + 2.5, round_=True, size=1.15)
-f_nightstand(h, cx - 3.5, FY, cz + 0.5)
-f_nightstand(h, cx + 3.5, FY, cz + 0.5)
+f_nightstand(h, cx - 4.0, FY, cz + 0.5)
+f_nightstand(h, cx + 4.0, FY, cz + 0.5)
 f_armchair(h, cx - 3.2, FY, cz - 2.4, SOFA_BEIGE, roty=60)
 f_loveseat(h, cx + 3.2, FY, cz - 2.4, SOFA_BEIGE, roty=-60)
 f_coffee_table(h, cx, FY, cz - 3.5, w=3, mat=WOOD, color=DARKWOOD)
-f_plant(h, cx - 4.8, FY, cz + 1, big=True)
-f_plant(h, cx + 4.8, FY, cz + 1, big=True)
-f_bookshelf(h, cx + 5.8, FY, cz + 4.5, roty=-90, w=5, hgt=5)
-f_floorlamp(h, cx + 5, FY, cz - 5.5)
+f_plant(h, cx - 2.2, FY, cz - 6.5, big=True)
+f_plant(h, cx + 2.2, FY, cz - 6.5, big=True)
+f_bookshelf(h, cx + 3.6, FY, cz + 4.4, roty=-90, w=5, hgt=5)
+f_floorlamp(h, cx + 4.2, FY, cz - 6.2)
 f_painting(h, cx - 8.1, FY + 4.5, cz + 2, roty=63, color=(80, 120, 160))
 
 # zen ring: rocks + mini trees around dome
@@ -1120,7 +1140,7 @@ for k in range(3):
               70), WOOD, cancollide=False))
 H(h, part("Panel3", (3.4, 7, 0.25), (cx + 9.1, FY + 3.75, cz - 8.5), (150, 90,
           70), WOOD, cancollide=False))
-f_door(h, cx + 4.5, FY, cz - 8.5, w=5.6, hgt=7, color=(150, 90, 70))
+f_door(h, cx + 4.5, FY, cz - 8.5, w=4.2, hgt=6.5, color=(150, 90, 70))
 H(h, part("WallL", (0.5, 7, 17), (cx - 11, FY + 3.75, cz), (225, 218, 200),
           PLASTIC))
 H(h, part("WallR", (0.5, 7, 17), (cx + 11, FY + 3.75, cz), (225, 218, 200),
@@ -1139,7 +1159,7 @@ for dx, dz in ((-2.2, -2.6), (2.2, -2.6), (-2.2, 1.4), (2.2, 1.4)):
               (170, 60, 60), FABRIC))
 f_bed(h, cx + 6.5, FY, cz + 4.5, roty=0, size=0.9, headcolor=DARKWOOD)
 f_rug(h, cx + 6.5, FY, cz + 2, 6, 5, (170, 60, 60), border=(120, 40, 40))
-f_bookshelf(h, cx + 10.6, FY, cz - 4, roty=-90, w=5, hgt=6)
+f_bookshelf(h, cx + 9.8, FY, cz - 4, roty=-90, w=5, hgt=6)
 f_plant(h, cx - 9, FY, cz + 5, big=True)
 H(h, part("BonsaiPot", (1.6, 0.9, 1.6), (cx - 4, FY + 1.65, cz - 1), (110, 70,
           50), WOOD))

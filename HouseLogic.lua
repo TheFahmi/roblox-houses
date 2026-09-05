@@ -16,7 +16,10 @@ for _, door in ipairs(workspace:GetDescendants()) do
 	if door:IsA("BasePart") and door.Name == "Door" then
 		door.CanCollide = false -- walk-through glass door, swing visual only
 		local closed = door.CFrame
-		local open = closed * CFrame.Angles(0, math.rad(100), 0)
+		local w = door.Size.X
+		-- swing around the left edge (hinge), not panel center
+		local open = closed * CFrame.new(-w / 2, 0, 0)
+			* CFrame.Angles(0, math.rad(100), 0) * CFrame.new(w / 2, 0, 0)
 		local debounce = false
 		door.Touched:Connect(function(hit)
 			if debounce then return end
