@@ -545,8 +545,8 @@ def f_flowerbed(h, x, z, w=6, d=2, y=0):
 
 
 def f_fence(h, x, z, length, roty=0, y=0, color=OFFWHITE, gap=None):
-    """Fence run: posts + slats along local X axis. gap=(center, width)
-    leaves an opening (e.g. gate in front of the door)."""
+    """Fence run along local X. gap=(center,width) leaves an opening and
+    places a swinging Gate part inside it (auto-opens via HouseLogic)."""
     ca, sa = math.cos(math.radians(roty)), math.sin(math.radians(roty))
 
     def seg(sx, slength):
@@ -569,6 +569,9 @@ def f_fence(h, x, z, length, roty=0, y=0, color=OFFWHITE, gap=None):
         gc, gw = gap
         seg(-length / 2, (gc - gw / 2) - (-length / 2))
         seg(length / 2, length / 2 - (gc + gw / 2))
+        H(h, part("Gate", (gw - 0.6, 4, 0.35),
+                  (x + gc * ca, y + 2, z + gc * sa), color, PLANKS,
+                  roty=roty))
     else:
         seg(0, length)
 

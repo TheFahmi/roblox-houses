@@ -498,4 +498,50 @@ Players.PlayerRemoving:Connect(function(player)
 	end
 end)
 
+-- ================= gates: swing open on approach, close after =================
+local gates = {}
+for _, p in ipairs(workspace:GetDescendants()) do
+	if p:IsA("BasePart") and p.Name == "Gate" then
+		table.insert(gates, p)
+	end
+end
+task.spawn(function()
+	while true do
+		local chars = {}
+		for _, player in ipairs(Players:GetPlayers()) do
+			local hrp = player.Character
+				and player.Character:FindFirstChild("HumanoidRootPart")
+			if hrp then
+				table.insert(chars, hrp.Position)
+			end
+		end
+		for _, gate in ipairs(gates) do
+			local near = false
+			for _, pos in ipairs(chars) do
+				if (pos - gate.Position).Magnitude < 12 then
+					near = true
+					break
+				end
+			end
+			if near ~= gate:GetAttribute("Open") then
+				gate:SetAttribute("Open", near)
+				local closed = gate:GetAttribute("ClosedCFrame")
+				if not closed then
+					closed = gate.CFrame
+					gate:SetAttribute("ClosedCFrame", closed)
+				end
+				local w = gate.Size.X
+				local target = near
+					and closed * CFrame.new(-w / 2, 0, 0)
+						* CFrame.Angles(0, math.rad(95), 0)
+						* CFrame.new(w / 2, 0, 0)
+					or closed
+				TweenService:Create(gate, TweenInfo.new(0.4),
+					{ CFrame = target }):Play()
+			end
+		end
+		task.wait(0.3)
+	end
+end)
+
 print("HouseLogic loaded")
