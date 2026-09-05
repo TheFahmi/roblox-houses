@@ -78,6 +78,9 @@ for folder in t.iter("Item"):
         for wn, ws, wp, WR in walls:
             if sat(s, pos, R, ws, wp, WR, TOL):
                 issues.append(f"{hname}: {n} intersects {wn}")
+        for sn, ss, sp, SR in steps:
+            if sat(s, pos, R, ss, sp, SR, TOL):
+                issues.append(f"{hname}: {n} intersects {sn} (stair)")
         if n in GROUND:
             base = pos[1] - sum(abs(R[i][1]) * s[i] / 2 for i in range(3))
             if not any(abs(base - ft) < 1.0 for ft in tops):
