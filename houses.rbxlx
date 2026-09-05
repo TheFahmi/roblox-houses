@@ -57,7 +57,7 @@ task.spawn(function() -- passive income
 			local ls = player:FindFirstChild("leaderstats")
 			local cash = ls and ls:FindFirstChild("Cash")
 			if cash then
-				cash.Value += 15
+				cash.Value += 5
 			end
 		end
 	end
@@ -323,7 +323,7 @@ end)
 
 -- ================= courier job: route of house drop-offs =================
 -- Depot near spawn -> touch drop pad at each house in order -> route bonus.
-local PAID_PER_LEG = 40
+local PAID_PER_LEG = 15
 local ROUTE = { "TinyHouse", "AFrame", "ModernCube", "Castle", "Dome",
 	"VillaL", "Mansion", "ZenHouse" }
 local jobs = {} -- player -> current stop name
@@ -357,7 +357,8 @@ depotLabel.TextColor3 = Color3.new(1, 1, 1)
 depotLabel.TextStrokeTransparency = 0.2
 depotLabel.TextScaled = true
 depotLabel.Font = Enum.Font.GothamBold
-depotLabel.Text = "📦 KURIR\ndekati kotak & klik untuk mulai/stop ($40/antaran)"
+depotLabel.Text = "📦 KURIR\ndekati kotak & klik untuk mulai/stop ($"
+	.. PAID_PER_LEG .. "/antaran)"
 depotLabel.Parent = depotGui
 
 -- invisible drop pads in front of every house door
@@ -469,11 +470,11 @@ for houseName, pad in pairs(dropPads) do
 			attachBox(player)
 			setJobText(player, "✅ +$" .. PAID_PER_LEG .. " — antar ke: " .. nxt)
 		else
-			cash.Value += 100 -- full-route bonus
+			cash.Value += 50 -- full-route bonus
 			jobs[player] = nil
 			detachBox(player)
 			setJobText(player, "🎉 Rute selesai! +$" .. PAID_PER_LEG
-				.. " +$100 bonus. Klik depot untuk mulai lagi.")
+				.. " +$50 bonus. Klik depot untuk mulai lagi.")
 			task.delay(4, function()
 				if not jobs[player] then
 					setJobText(player, nil)
