@@ -748,11 +748,11 @@ def build_ModernCube(cx, cz, FY, hname):
               cancollide=False))
 
     # F1: living room
-    f_rug(h, cx - 4, FY, cz - 1, 10, 8, (70, 80, 95), border=(40, 48, 60))
-    f_sofa(h, cx - 5, FY, cz + 3, SOFA_NAVY)
+    f_rug(h, cx - 5, FY, cz, 10, 8, (70, 80, 95), border=(40, 48, 60))
+    f_sofa(h, cx - 5.5, FY, cz - 2, SOFA_NAVY, roty=180)
     f_loveseat(h, cx - 10.4, FY, cz + 4.5, SOFA_NAVY, roty=90)
-    f_coffee_table(h, cx - 5, FY, cz - 1)
-    f_tv(h, cx - 9.7, FY, cz - 8.2, roty=180, w=4)
+    f_coffee_table(h, cx - 5, FY, cz + 0.5)
+    f_tv(h, cx - 5, FY, cz + 7.6, roty=0, w=4)
     f_bookshelf(h, cx + 11, FY, cz + 4, roty=-90, w=8, hgt=7)
     f_floorlamp(h, cx - 10, FY, cz + 7)
     f_plant(h, cx + 9.3, FY, cz - 4.5, big=True)
