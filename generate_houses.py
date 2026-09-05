@@ -1398,10 +1398,173 @@ def build_Mansion(cx, cz, FY, hname):
     f_flowerbed(h, cx + 12, cz - 21, w=10, d=2.5)
 
 
+# ================================================================ HOUSE I
+# Penthouse — owner/developer flagship. Single unit, not for sale.
+# 3 floors + rooftop, central glass elevator shaft (cab animated in Lua).
+def build_Penthouse(cx, cz, FY, hname):
+    global h
+    h = hname
+
+    H(h, part("Lot", (44, 0.2, 40), (cx, 0.1, cz), (40, 40, 44), CONCRETE))
+    for fl in range(3):
+        top = fl == 2
+        # floor slabs (F2/F3 with elevator shaft hole at (cx, cz+8) 7.5x7.5)
+        if fl == 0:
+            H(h, part(f"Slab{fl}", (30, 0.5, 26), (cx, FY - 0.25, cz), MARBLEC,
+                      MARBLE))
+        else:
+            zc = cz + 8
+            H(h, part(f"Slab{fl}Front", (30, 0.5, 17.25), (cx, FY + fl * 12
+                      - 0.25, cz - 4.375), MARBLEC, MARBLE))
+            H(h, part(f"Slab{fl}Back", (30, 0.5, 1.25), (cx, FY + fl * 12
+                      - 0.25, zc + 6.375), MARBLEC, MARBLE))
+            H(h, part(f"Slab{fl}L", (11.25, 0.5, 7.5), (cx - 9.375, FY + fl
+                      * 12 - 0.25, zc), MARBLEC, MARBLE))
+            H(h, part(f"Slab{fl}R", (11.25, 0.5, 7.5), (cx + 9.375, FY + fl
+                      * 12 - 0.25, zc), MARBLEC, MARBLE))
+        # walls per floor: glass sides/back, gold-mullion front
+        wy = FY + fl * 12 + 5.5
+        H(h, part(f"WallBack{fl}", (30, 11, 0.5), (cx, wy, cz + 13), WHITE,
+                  SMOOTH))
+        H(h, part(f"GlassBack{fl}", (28, 10, 0.4), (cx, wy, cz + 12.6),
+                  GLASSC, GLASS, transparency=0.4, cancollide=False))
+        H(h, part(f"WallL{fl}", (0.5, 11, 26), (cx - 15, wy, cz), WHITE,
+                  SMOOTH))
+        H(h, part(f"GlassL{fl}", (0.4, 10, 24), (cx - 14.6, wy, cz), GLASSC,
+                  GLASS, transparency=0.4, cancollide=False))
+        H(h, part(f"WallR{fl}", (0.5, 11, 26), (cx + 15, wy, cz), WHITE,
+                  SMOOTH))
+        H(h, part(f"GlassR{fl}", (0.4, 10, 24), (cx + 14.6, wy, cz), GLASSC,
+                  GLASS, transparency=0.4, cancollide=False))
+        if not top:
+            H(h, part(f"GlassFront{fl}", (30, 11, 0.4), (cx, wy, cz - 13),
+                      GLASSC, GLASS, transparency=0.4))
+            H(h, part(f"GoldBeam{fl}", (30, 0.4, 0.4), (cx, FY + fl * 12
+                      + 10.8, cz - 12.8), GOLD, FOIL, cancollide=False))
+        else:
+            # rooftop parapet
+            H(h, part(f"ParapetF{fl}", (30, 2.5, 0.5), (cx, FY + 24.5
+                      + 1.25, cz - 13), WHITE, SMOOTH))
+            H(h, part(f"ParapetB{fl}", (30, 2.5, 0.5), (cx, FY + 24.5
+                      + 1.25, cz + 13), WHITE, SMOOTH))
+            H(h, part(f"ParapetL{fl}", (0.5, 2.5, 26), (cx - 15, FY + 24.5
+                      + 1.25, cz), WHITE, SMOOTH))
+            H(h, part(f"ParapetR{fl}", (0.5, 2.5, 26), (cx + 15, FY + 24.5
+                      + 1.25, cz), WHITE, SMOOTH))
+            H(h, part(f"RoofTrim{fl}", (31, 0.6, 27), (cx, FY + 24.5
+                      + 0.1, cz), GOLD, FOIL, cancollide=False))
+    H(h, part("RoofSlab", (31, 0.5, 27), (cx, FY + 24.25, cz), MARBLEC, MARBLE))
+
+    # elevator shaft: corner columns + glass, front openings each floor
+    sx, sz = cx, cz + 8
+    for px in (-3.5, 3.5):
+        for pz in (-3.5, 3.5):
+            H(h, part("ShaftColumn", (0.8, 36, 0.8), (sx + px, FY + 18,
+                      sz + pz), WHITE, SMOOTH))
+    for fl in range(3):
+        wy = FY + fl * 12 + 5.5
+        H(h, part(f"ShaftBack{fl}", (7.4, 11, 0.4), (sx, wy, sz + 3.5),
+                  GLASSC, GLASS, transparency=0.55))
+        H(h, part(f"ShaftL{fl}", (0.4, 11, 7.4), (sx - 3.5, wy, sz), GLASSC,
+                  GLASS, transparency=0.55))
+        H(h, part(f"ShaftR{fl}", (0.4, 11, 7.4), (sx + 3.5, wy, sz), GLASSC,
+                  GLASS, transparency=0.55))
+        H(h, part(f"ShaftJamL{fl}", (1.7, 11, 0.4), (sx - 2.85, wy, sz - 3.5),
+                  GLASSC, GLASS, transparency=0.55))
+        H(h, part(f"ShaftJamR{fl}", (1.7, 11, 0.4), (sx + 2.85, wy, sz - 3.5),
+                  GLASSC, GLASS, transparency=0.55))
+        # guard rails around shaft hole on upper slabs
+        if fl > 0:
+            ry = FY + fl * 12 + 0.2
+            f_railing(h, sx, ry, sz - 3.9, length=8, roty=0, color=GOLD)
+            f_railing(h, sx, ry, sz + 3.9, length=8, roty=0, color=GOLD)
+            f_railing(h, sx - 3.9, ry, sz, length=8, roty=90, color=GOLD)
+            f_railing(h, sx + 3.9, ry, sz, length=8, roty=90, color=GOLD)
+    # elevator cab (animated by HouseLogic): base + 3 low glass shields
+    H(h, part("ElevatorBase", (7, 0.5, 7), (sx, FY + 0.25, sz), (60, 60, 66),
+              METAL))
+    for dx, dz, ex, ez in ((0, 3.3, 6.6, 0.2), (-3.3, 0, 0.2, 6.6),
+                           (3.3, 0, 0.2, 6.6)):
+        H(h, part("ElevatorShield", (ex, 3.4, ez), (sx + dx, FY + 2.2,
+                  sz + dz), GLASSC, GLASS, transparency=0.3,
+                  cancollide=False))
+
+    # ---- F1: grand lobby ----
+    H(h, part("Carpet", (6, 0.15, 20), (cx, FY + 0.07, cz - 3), CARPET_RED,
+              FABRIC, cancollide=False))
+    for px in (-8, 8):
+        for pz in (-4, 4):
+            H(h, part("LobbyColumn", (1.3, 11, 1.3), (cx + px, FY + 5.5,
+                      cz + pz), (240, 235, 225), MARBLE))
+            H(h, part("ColumnTrim", (1.7, 0.5, 1.7), (cx + px, FY + 10.8,
+                      cz + pz), GOLD, FOIL))
+    f_chandelier(h, cx - 7, FY + 11.4, cz - 2, 1.5, tiers=2, bulbs_per=6)
+    f_chandelier(h, cx + 7, FY + 11.4, cz - 2, 1.5, tiers=2, bulbs_per=6)
+    f_sofa(h, cx - 8, FY, cz - 8, (120, 90, 60), w=5)
+    f_sofa(h, cx + 8, FY, cz - 8, (120, 90, 60), w=5, roty=180)
+    f_coffee_table(h, cx, FY, cz - 8, w=4)
+    f_plant(h, cx - 12.5, FY, cz - 11, big=True)
+    f_plant(h, cx + 12.5, FY, cz - 11, big=True)
+    f_door(h, cx, FY, cz - 13, w=6, hgt=8, color=GOLD)
+    H(h, part("GoldEntrance", (8, 0.5, 0.5), (cx, FY + 8.4, cz - 12.8), GOLD,
+              FOIL, cancollide=False))
+
+    # ---- F2: sky suite ----
+    f_bed(h, cx - 9, FY + 12, cz + 9, roty=180, size=1.1, headcolor=MAHOGANY)
+    f_nightstand(h, cx - 12.3, FY + 12, cz + 8.5)
+    f_nightstand(h, cx - 5.7, FY + 12, cz + 8.5)
+    f_rug(h, cx - 9, FY + 12, cz + 5, 9, 7, CARPET_PURPLE, border=GOLD)
+    f_wardrobe(h, cx - 10.5, FY + 12, cz + 1, w=8)
+    f_bathroom(h, cx + 9.5, FY + 12, cz + 8)
+    f_sofa(h, cx + 6, FY + 12, cz + 1, SOFA_BEIGE, roty=180, w=6)
+    f_coffee_table(h, cx + 6, FY + 12, cz - 0.5, w=3.5)
+    f_chandelier(h, cx, FY + 23.4, cz - 4, 1.4, tiers=2, bulbs_per=6)
+    f_painting(h, cx - 14.6, FY + 17, cz, roty=90, w=5, hgt=3.5,
+               color=(90, 40, 90))
+
+    # ---- F3: rooftop lounge (open sky) ----
+    H(h, part("PoolDeck", (16, 0.4, 9), (cx - 8, FY + 24.4, cz + 6), MARBLEC,
+              MARBLE))
+    H(h, part("PoolBasin", (12, 1.2, 6.5), (cx - 8, FY + 24.6, cz + 6),
+              (200, 205, 210), PLASTIC))
+    H(h, part("PoolWater", (11.4, 1, 5.9), (cx - 8, FY + 24.75, cz + 6),
+              POOL_WATER, GLASS, transparency=0.3))
+    H(h, part("Helipad", (0.3, 16, 16), (cx + 8, FY + 24.6, cz + 6), (70, 70,
+              74), CONCRETE, shape=CYL, rotz=90))
+    for hd, hl in ((0, 6), (-1.6, 3), (1.6, 3)):
+        H(h, part("HelipadH", (hl if hl < 5 else 1.2, 0.15,
+                  1.2 if hl < 5 else 6), (cx + 8 + hd, FY + 24.85, cz + 6),
+                  WHITE, SMOOTH, cancollide=False))
+    H(h, part("BarCounter", (9, 3, 1.5), (cx, FY + 25.5, cz + 10.5), DARKWOOD,
+              WOOD))
+    H(h, part("BarTop", (9.6, 0.3, 2), (cx, FY + 27.1, cz + 10.5), GOLD, FOIL))
+    for bx in (-3, 0, 3):
+        H(h, part("BarStool", (0.9, 2.4, 0.9), (cx + bx, FY + 26.2,
+                  cz + 8.7), (110, 52, 38), PLASTIC, shape=CYL, rotz=90))
+    f_sofa(h, cx - 1, FY + 24.5, cz - 6.5, (150, 120, 60), w=6)
+    f_coffee_table(h, cx - 1, FY + 24.5, cz - 8.7, w=3.5, mat=FOIL,
+                   color=GOLD)
+    H(h, part("FireRing", (3.4, 0.6, 3.4), (cx + 7, FY + 24.9, cz - 7),
+              (70, 70, 74), SLATE, shape=CYL, rotz=90))
+    H(h, part("Fire", (1.6, 1, 1.6), (cx + 7, FY + 25.6, cz - 7), FLAME,
+              NEON, shape=BALL, cancollide=False))
+
+    # owner sign (physical, like sale signs but static)
+    H(h, part("OwnerSignPost", (0.6, 5, 0.6), (cx + 12, FY + 2.5, cz - 15),
+              (60, 42, 30), WOOD))
+    H(h, part("OwnerSign", (6, 3, 0.4), (cx + 12, FY + 6, cz - 15), (30, 22,
+              16), WOOD))
+    H(h, part("OwnerSignPlate", (5.6, 2.6, 0.15), (cx + 12, FY + 6, cz
+              - 15.25), GOLD, FOIL, cancollide=False))
+
+
 
 # ================================================================ complexes
 # 8 complexes x 5 units = 40 houses. Each complex = row of 5 same-type lots
 # along +X, unit pitch >= lot size so lots never overlap; rows stack along +Z.
+# single-unit owner house (excluded from complexes & PRICES)
+assert os.environ.get("WITH_PENTHOUSE", "1") == "1"
+
 BUILDERS = [
     ("TinyHouse", build_TinyHouse, 0.5, 26),
     ("ZenHouse", build_ZenHouse, 2.5, 40),
@@ -1413,6 +1576,9 @@ BUILDERS = [
     ("Mansion", build_Mansion, 0.5, 62),
 ]
 UNITS = 5
+
+# owner/developer flagship: one unit, south of plaza facing spawn
+build_Penthouse(-140, 95, 0.5, "Penthouse")
 
 complex_names = []              # folder names, e.g. "Castle#3"
 for base, fn, fy, pitch in BUILDERS:
@@ -1437,7 +1603,7 @@ for rz in ROW_ZS:
     H("Shared", part(f"RoadLane{BUILDERS[bi][0]}", (length, 0.2, 8),
                      ((xe + -90) / 2, 0.11, rz - 28), *ROAD))
 
-order = ["Shared"] + complex_names
+order = ["Shared", "Penthouse"] + complex_names
 inner = ""
 for name in order:
     inner += (f'<Item class="Folder" referent="{ref()}"><Properties>'
@@ -1482,7 +1648,7 @@ n_items = doc.count("<Item class=")
 n_doors = doc.count(">Door<")
 n_houses = sum(1 for name in order[1:] if houses.get(name))
 assert n_doors >= 6, n_doors
-assert n_houses == 40, n_houses
+assert n_houses == 41, n_houses
 lines_gen = sum(1 for _ in open(__file__, encoding="utf-8"))
 print(f"OK {out}: {os.path.getsize(out)} bytes, {n_items} items, "
       f"{n_doors} doors, {n_houses} houses, generator {lines_gen} lines")

@@ -67,7 +67,8 @@ for folder in t.iter("Item"):
         continue
     parts = [props(it) for it in folder.findall("./Item")]
     tops = sorted({round(y_top(p), 1) for p in parts
-                   if p[0].startswith(("Floor", "Platform", "TowerFloor"))},
+                   if p[0].startswith(("Floor", "Platform", "TowerFloor",
+                                       "Slab"))},
                   reverse=True)
     walls = [p for p in parts if p[0].startswith(("Wall", "Slope", "Header"))]
     steps = sorted((p for p in parts if p[0].startswith("Step")),

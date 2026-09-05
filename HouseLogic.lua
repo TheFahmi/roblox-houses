@@ -522,6 +522,53 @@ Players.PlayerRemoving:Connect(function(player)
 	end
 end)
 
+-- ================= Penthouse elevator (F1 lobby / F2 suite / F3 roof) =====
+do
+	local folder = workspace:FindFirstChild("Penthouse")
+	local cab = folder and folder:FindFirstChild("ElevatorBase", true)
+	if cab then
+		local FLOORS = { 0.5, 12.5, 24.5 } -- FY of each level
+		local BASE_X, BASE_Z = cab.Position.X, cab.Position.Z
+		local floorY = 1
+		local moving = false
+
+		local function goTo(idx)
+			if moving or idx == floorY then return end
+			moving = true
+			local target = Vector3.new(BASE_X, FLOORS[idx] + 0.25, BASE_Z)
+			local dist = math.abs(target.Y - cab.Position.Y)
+			TweenService:Create(cab, TweenInfo.new(dist / 12,
+				Enum.EasingStyle.Sine, Enum.EasingDirection.InOut),
+				{ CFrame = CFrame.new(target) * (cab.CFrame
+					- cab.Position) }):Play()
+			task.delay(dist / 12 + 0.1, function()
+				floorY = idx
+				moving = false
+			end)
+		end
+
+		-- call buttons on shaft jambs, one per floor (F3 sits by the rails)
+		local folderPar = cab.Parent
+		for fl, fy in ipairs(FLOORS) do
+			local btn = Instance.new("Part")
+			btn.Name = "ElevatorCall" .. fl
+			btn.Size = Vector3.new(0.6, 1.2, 0.6)
+			btn.Color = Color3.fromRGB(212, 175, 55)
+			btn.Material = Enum.Material.Neon
+			btn.Anchored = true
+			btn.CFrame = CFrame.new(BASE_X + 2.85 * 1.75, fy + 2.2,
+				BASE_Z - 3.5 * 1.75 - 0.5)
+			btn.Parent = folderPar
+			local click = Instance.new("ClickDetector")
+			click.MaxActivationDistance = 16
+			click.Parent = btn
+			click.MouseClick:Connect(function()
+				goTo(fl)
+			end)
+		end
+	end
+end
+
 -- ================= gates: swing open on approach, close after =================
 local gates = {}
 for _, p in ipairs(workspace:GetDescendants()) do
