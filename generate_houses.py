@@ -588,13 +588,18 @@ def f_fence(h, x, z, length, roty=0, y=0, color=OFFWHITE, gap=None):
         H(h, part("FenceRailB", (slength, 0.3, 0.2), (mx, y + 2.8, mz),
                   color, WOOD, roty=roty, cancollide=False))
 
-    if gap:
-        gc, gw = gap
-        seg(-length / 2, (gc - gw / 2) - (-length / 2))
-        seg(length / 2, length / 2 - (gc + gw / 2))
-        H(h, part("Gate", (gw - 0.6, 4, 0.35),
-                  (x + gc * ca, y + 2, z + gc * sa), color, PLANKS,
-                  roty=roty))
+    gap_list = gap if isinstance(gap, list) else ([gap] if gap else [])
+    if gap_list:
+        # segments between gaps, then one gate per gap
+        edge = -length / 2
+        for gc, gw in sorted(gap_list):
+            seg(edge, (gc - gw / 2) - edge)
+            edge = gc + gw / 2
+        seg(edge, length / 2 - edge)
+        for gc, gw in gap_list:
+            H(h, part("Gate", (gw - 0.6, 4, 0.35),
+                      (x + gc * ca, y + 2, z + gc * sa), color, PLANKS,
+                      roty=roty))
     else:
         seg(0, length)
 
@@ -782,8 +787,7 @@ def build_ModernCube(cx, cz, FY, hname):
                       METAL))
     f_carport_car(h, cx + 20, FY, cz, color=CAR_RED)
 
-    f_fence(h, cx - 16, cz - 14, 34, y=0.2, gap=(12.5, 9))
-    f_fence(h, cx + 16, cz - 14, 34, y=0.2, gap=(-12.5, 9))
+    f_fence(h, cx, cz - 14, 34, y=0.2, gap=(0, 11))
     f_fence(h, cx, cz + 14.8, 32, y=0.2)
     f_tree(h, cx - 14, cz + 10, s=0.9)
     f_flowerbed(h, cx + 6, cz - 13, w=10, d=2.5)
@@ -843,8 +847,7 @@ def build_AFrame(cx, cz, FY, hname):
     f_rug(h, cx - 4, FY, cz + 4, 6, 5, (140, 90, 55))
     f_painting(h, cx - 7.6, FY + 5, cz + 4, roty=90, color=(70, 110, 70))
 
-    f_fence(h, cx - 14, cz - 14, 28, y=0.2, gap=(10.5, 9))
-    f_fence(h, cx + 14, cz - 14, 28, y=0.2, gap=(-10.5, 9))
+    f_fence(h, cx, cz - 14, 28, y=0.2, gap=(0, 11))
     f_fence(h, cx, cz + 14.8, 28, y=0.2)
     f_tree(h, cx - 11, cz + 9, s=1.0)
     f_tree(h, cx + 11, cz + 10, s=0.8)
@@ -974,8 +977,7 @@ def build_Castle(cx, cz, FY, hname):
     f_bed(h, tx, FY + 12.25, tz, round_=True, size=0.8, color=(180, 170, 160))
     f_painting(h, tx, FY + 15.5, tz - 4.8, color=(60, 60, 120))
 
-    f_fence(h, cx - 19, cz - 17, 38, y=0.2, color=DARKSTONE, gap=(15.5, 9))
-    f_fence(h, cx + 19, cz - 17, 38, y=0.2, color=DARKSTONE, gap=(-15.5, 9))
+    f_fence(h, cx, cz - 17, 38, y=0.2, color=DARKSTONE, gap=(0, 10))
     f_fence(h, cx - 3, cz + 17.8, 32, y=0.2, color=DARKSTONE)
     f_fence(h, cx + 17, cz + 17.8, 12, y=0.2, color=DARKSTONE)
     f_tree(h, cx - 15, cz - 12, s=1.0)
@@ -1087,8 +1089,7 @@ def build_VillaL(cx, cz, FY, hname):
                       METAL))
     f_carport_car(h, cx - 16, FY, cz + 2, color=(40, 60, 110))
 
-    f_fence(h, cx - 21, cz - 19, 42, y=0.2, gap=(19.5, 9))
-    f_fence(h, cx + 21, cz - 19, 42, y=0.2, gap=(-19.5, 9))
+    f_fence(h, cx - 3, cz - 19, 42, y=0.2, gap=(0, 10))
     f_fence(h, cx, cz + 19.8, 42, y=0.2)
     f_tree(h, cx + 17, cz - 15, s=1.0)
     f_tree(h, cx - 17, cz + 15, s=0.85)
@@ -1144,8 +1145,7 @@ def build_Dome(cx, cz, FY, hname):
     f_tree(h, cx + 13, cz + 12, s=0.7)
     f_lantern(h, cx - 10, cz, y=FY)
     f_lantern(h, cx + 10, cz, y=FY)
-    f_fence(h, cx - 16, cz - 16, 32, y=0.2, gap=(14.5, 9))
-    f_fence(h, cx + 16, cz - 16, 32, y=0.2, gap=(-14.5, 9))
+    f_fence(h, cx, cz - 16, 32, y=0.2, gap=(0, 10))
     f_fence(h, cx - 8, cz + 16.8, 16, y=0.2)
     f_fence(h, cx + 8, cz + 16.8, 16, y=0.2)
     f_flowerbed(h, cx, cz - 15, w=10, d=2.5)
@@ -1287,8 +1287,7 @@ def build_TinyHouse(cx, cz, FY, hname):
     f_plant(h, cx + 4.8, FY, cz - 4.8)
     f_lantern(h, cx - 5.5, cz - 9.5, y=FY)
     f_lantern(h, cx + 5.5, cz - 9.5, y=FY)
-    f_fence(h, cx - 12, cz - 12, 24, y=0.2, color=(120, 85, 60), gap=(10.5, 9))
-    f_fence(h, cx + 12, cz - 12, 24, y=0.2, color=(120, 85, 60), gap=(-10.5, 9))
+    f_fence(h, cx, cz - 12, 24, y=0.2, color=(120, 85, 60), gap=(0, 9))
     f_fence(h, cx, cz + 12.8, 24, y=0.2, color=(120, 85, 60))
     f_tree(h, cx - 9, cz + 8, s=0.7)
     f_flowerbed(h, cx + 4, cz - 11, w=8, d=2)
@@ -1389,8 +1388,8 @@ def build_Mansion(cx, cz, FY, hname):
     for hx, hz in ((-20, -16), (20, -16), (-20, 16), (20, 16)):
         H(h, part("Hedge", (6, 3, 2), (cx + hx, FY + 1.5, cz + hz), (50, 110, 60),
                   GRASS))
-    f_fence(h, cx - 27, cz - 23, 54, y=0.2, gap=(25.5, 9))
-    f_fence(h, cx + 27, cz - 23, 54, y=0.2, gap=(-25.5, 9))
+    f_fence(h, cx, cz - 23, 54, y=0.2,
+            gap=[(-13, 9), (0, 10), (13, 9)])
     f_fence(h, cx - 12, cz + 23.8, 30, y=0.2)
     f_fence(h, cx + 12, cz + 23.8, 30, y=0.2)
     f_tree(h, cx - 22, cz + 18, s=1.1)
