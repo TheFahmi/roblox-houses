@@ -522,6 +522,177 @@ Players.PlayerRemoving:Connect(function(player)
 	end
 end)
 
+-- ================= drivable cars (replace static CarBody builds) ==========
+do
+	for _, folder in ipairs(workspace:GetChildren()) do
+		if not folder:IsA("Folder") then continue end
+		local body = folder:FindFirstChild("CarBody", true)
+		local glass = folder:FindFirstChild("CarGlass", true)
+		local cabin = folder:FindFirstChild("CarCabin", true)
+		if not (body and cabin and body:IsA("BasePart")) then continue end
+
+		-- remove static pieces; rebuild as a drivable Model at the same spot
+		local color = body.Color
+		local bodyCF = body.CFrame
+		for _, nm in ipairs({ "CarBody", "CarCabin", "CarGlass", "CarWheel" }) do
+			for _, d in ipairs(folder:GetDescendants()) do
+				if d:IsA("BasePart") and d.Name == nm then
+					d:Destroy()
+				end
+			end
+		end
+
+		local car = Instance.new("Model")
+		car.Name = "DrivableCar"
+
+		local chassis = Instance.new("Part")
+		chassis.Name = "Chassis"
+		chassis.Size = Vector3.new(7.5, 1, 14)
+		chassis.Color = color
+		chassis.Material = Enum.Material.SmoothPlastic
+		chassis.CFrame = bodyCF * CFrame.new(0, 0.4, 0)
+		chassis.Parent = car
+
+		local shell = Instance.new("Part")
+		shell.Name = "Shell"
+		shell.Size = Vector3.new(7.5, 2.2, 14)
+		shell.Color = color
+		shell.Material = Enum.Material.SmoothPlastic
+		shell.CFrame = chassis.CFrame * CFrame.new(0, 1.6, 0)
+		shell.CanCollide = false
+		shell.Parent = car
+
+		local hood = Instance.new("Part")
+		hood.Name = "Hood"
+		hood.Size = Vector3.new(7.4, 1.4, 5)
+		hood.Color = color
+		hood.Material = Enum.Material.SmoothPlastic
+		hood.CFrame = chassis.CFrame * CFrame.new(0, 1.3, -4.4)
+		hood.CanCollide = false
+		hood.Parent = car
+
+		local seat = Instance.new("VehicleSeat")
+		seat.Name = "DriveSeat"
+		seat.Size = Vector3.new(5, 0.6, 3)
+		seat.Color = Color3.fromRGB(25, 25, 28)
+		seat.Material = Enum.Material.Fabric
+		seat.MaxSpeed = 45
+		seat.Torque = 9
+		seat.TurnSpeed = 6
+		seat.CFrame = chassis.CFrame * CFrame.new(0, 1.45, 1.5)
+		seat.Parent = car
+
+		-- windscreen
+		local ws = Instance.new("Part")
+		ws.Name = "Windscreen"
+		ws.Size = Vector3.new(6.8, 2.2, 0.3)
+		ws.Color = Color3.fromRGB(200, 225, 240)
+		ws.Material = Enum.Material.Glass
+		ws.Transparency = 0.45
+		ws.CFrame = chassis.CFrame * CFrame.new(0, 3.3, -2.2)
+			* CFrame.Angles(math.rad(-18), 0, 0)
+		ws.CanCollide = false
+		ws.Parent = car
+
+		-- wheels on hinge-motors (front steer, rear drive)
+		local wheelM, wheelZ = Instance.new("Model", car), {}
+		for _, wx in ipairs({ -3.9, 3.9 }) do
+			for _, wz in ipairs({ -4.8, 4.8 }) do
+				local wheel = Instance.new("Part")
+				wheel.Name = "Wheel"
+				wheel.Size = Vector3.new(1.2, 3, 3)
+				wheel.Color = Color3.fromRGB(35, 35, 38)
+				wheel.Material = Enum.Material.SmoothPlastic
+				wheel.CFrame = chassis.CFrame * CFrame.new(wx, -0.4, wz)
+				wheel.Parent = wheelM
+				table.insert(wheelZ, { wheel, wz < 0 })
+			end
+		end
+
+		car.PrimaryPart = chassis
+		car.Parent = folder
+
+		-- weld wheels via hinge constraints, chassis anchored-free setup
+		local function makeHinge(wheel, isFront, wz)
+			local att0 = Instance.new("Attachment")
+			att0.CFrame = chassis.CFrame:ToObjectSpace(wheel.CFrame)
+				* CFrame.Angles(0, isFront and math.rad(90) or 0, 0)
+			att0.Parent = chassis
+			local att1 = Instance.new("Attachment")
+			att1.Parent = wheel
+			local hinge = Instance.new("HingeConstraint")
+			hinge.Attachment0 = att0
+			hinge.Attachment1 = att1
+			hinge.AxesEnabled = false
+			hinge.Parent = wheel
+			return hinge
+		end
+		local driveHinges = {}
+		for _, entry in ipairs(wheelZ) do
+			local hinge = makeHinge(entry[1], entry[2])
+			if not entry[2] then
+				table.insert(driveHinges, hinge)
+			end
+		end
+
+		-- drive: when a player sits, release anchors and wire throttle
+		local function setPhysics(on)
+			for _, p in ipairs(car:GetDescendants()) do
+				if p:IsA("BasePart") then
+					p.Anchored = not on
+				end
+			end
+			if on then
+				for _, h in ipairs(driveHinges) do
+					h.MotorMaxAcceleration = 40
+				end
+			else
+				for _, h in ipairs(driveHinges) do
+					h.MotorMaxAcceleration = 0
+					h.AngularVelocity = 0
+				end
+			end
+		end
+		setPhysics(false)
+
+		local occupant = nil
+		seat:GetPropertyChangedSignal("Occupant"):Connect(function()
+			local hum = seat.Occupant
+			local player = hum and Players:GetPlayerFromCharacter(hum.Parent)
+			if player then
+				occupant = player
+				setPhysics(true)
+				-- throttle loop while driven
+				task.spawn(function()
+					while occupant == player
+						and seat.Occupant == hum do
+						local throttle = seat.ThrottleFloat
+						for _, h in ipairs(driveHinges) do
+							h.AngularVelocity = -throttle * 18
+							h.MotorMaxTorque = 5e4
+						end
+						task.wait(0.1)
+					end
+					setPhysics(false)
+					occupant = nil
+				end)
+			end
+		end)
+
+		-- respawn car where it was built if abandoned far away / flipped
+		task.spawn(function()
+			while true do
+				task.wait(30)
+				if not occupant and car.Parent
+					and (chassis.Position - bodyCF.Position).Magnitude > 150 then
+					setPhysics(false)
+					car:PivotTo(bodyCF * CFrame.new(0, 0.4, 0))
+				end
+			end
+		end)
+	end
+end
+
 -- ================= Penthouse elevator (F1 lobby / F2 suite / F3 roof) =====
 do
 	local folder = workspace:FindFirstChild("Penthouse")
