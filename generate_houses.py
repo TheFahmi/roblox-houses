@@ -181,27 +181,38 @@ def f_coffee_table(h, x, y, z, w=4, mat=GLASS, color=GLASSC, leg=GOLD):
               DARKWOOD, WOOD, cancollide=False))
 
 
-def f_dining(h, x, y, z, seats=6, w=7, mat=WOOD, color=DARKWOOD):
+def f_dining(h, x, y, z, seats=6, w=7, mat=WOOD, color=DARKWOOD, roty=0):
     """Dining table + `seats` chairs around it."""
-    H(h, part("DiningTable", (w, 0.35, 3.4), (x, y + 1.55, z), color, mat))
+    ca, sa = math.cos(math.radians(roty)), math.sin(math.radians(roty))
+
+    def r(dx, dz):
+        return (x + dx * ca - dz * sa, z + dx * sa + dz * ca)
+
+    H(h, part("DiningTable", (w, 0.35, 3.4), (x, y + 1.55, z), color, mat,
+              roty=roty))
     H(h, part("DiningRunner", (w - 1.5, 0.12, 1.1), (x, y + 1.8, z),
-              CARPET_CREAM, FABRIC, cancollide=False))
+              CARPET_CREAM, FABRIC, roty=roty, cancollide=False))
     for dx in (-w / 2 + 0.5, 0, w / 2 - 0.5):
-        H(h, part("TableLeg", (0.35, 1.4, 0.35), (x + dx, y + 0.7, z), color, mat))
+        lx, lz = r(dx, 0)
+        H(h, part("TableLeg", (0.35, 1.4, 0.35), (lx, y + 0.7, lz), color,
+                  mat, roty=roty))
     for i in range(seats):
         side = -1 if i % 2 == 0 else 1
         idx = i // 2
-        cx_ = x - (w / 2 - 1) + idx * (w - 2) / max(seats // 2 - 1, 1)
-        cz_ = z + side * 2.4
-        H(h, part("ChairSeat", (1.3, 0.25, 1.3), (cx_, y + 1.0, cz_), color, WOOD))
+        cx_, cz_ = r(- (w / 2 - 1) + idx * (w - 2) / max(seats // 2 - 1, 1),
+                     side * 2.4)
+        srot = roty if side == 1 else roty + 180
+        H(h, part("ChairSeat", (1.3, 0.25, 1.3), (cx_, y + 1.0, cz_), color,
+                  WOOD, roty=roty))
         H(h, part("ChairBack", (1.3, 1.6, 0.25), (cx_, y + 1.8, cz_ + side * 0.55),
-                  color, WOOD))
+                  color, WOOD, roty=roty))
         for lx in (-0.5, 0.5):
             for lz in (-0.5, 0.5):
-                H(h, part("ChairLeg", (0.15, 0.9, 0.15),
-                          (cx_ + lx, y + 0.45, cz_ + lz), color, WOOD))
+                ox, oz = r(lx + (cx_ - x), lz + (cz_ - z))
+                H(h, part("ChairLeg", (0.15, 0.9, 0.15), (ox, y + 0.45, oz),
+                          color, WOOD, roty=roty))
         H(h, part("ChairCushion", (1.1, 0.12, 1.1), (cx_, y + 1.19, cz_),
-                  CARPET_CREAM, FABRIC, cancollide=False))
+                  CARPET_CREAM, FABRIC, roty=roty, cancollide=False))
 
 
 def f_chandelier(h, x, y, z, scale=1.0, tiers=2, bulbs_per=3):
@@ -390,11 +401,23 @@ def f_kitchen(h, x, y, z, roty=0, run=14, fridge=True):
 
 
 def f_bathroom(h, x, y, z, roty=0):
-    """Bathtub, toilet, sink, mirror — compact corner set."""
+    """Bathtub, toilet, sink, mirror + partition walls (back + both sides)
+    with a frosted doorway — the set forms an enclosed ~11x5.5 room."""
     ca, sa = math.cos(math.radians(roty)), math.sin(math.radians(roty))
 
     def r(dx, dz):
         return (x + dx * ca - dz * sa, z + dx * sa + dz * ca)
+
+    def wall(dx, dz, sx, sz):
+        wx, wz = r(dx, dz)
+        H(h, part("BathWall", (sx, 7, sz), (wx, y + 3.5, wz), MARBLEC,
+                  PLASTIC, roty=roty))
+    wall(0, 2.75, 11.5, 0.5)          # back
+    wall(-5.5, 0, 0.5, 5.5)           # left
+    wall(5.5, -0.5, 0.5, 4.5)         # right, doorway gap at its front end
+    gdx, gdz = r(5.5, -2.2)
+    H(h, part("BathDoorway", (0.35, 6, 2), (gdx, y + 3, gdz), (200, 225, 240),
+              SMOOTH, transparency=0.55, roty=roty, cancollide=False))
 
     tx, tz = r(-3.4, 0)
     H(h, part("TubOuter", (4.2, 1.6, 2.4), (tx, y + 0.8, tz), MARBLEC, PLASTIC,
@@ -722,10 +745,10 @@ def build_ModernCube(cx, cz, FY, hname):
     # F1: living room
     f_rug(h, cx - 4, FY, cz - 1, 10, 8, (70, 80, 95), border=(40, 48, 60))
     f_sofa(h, cx - 5, FY, cz + 3, SOFA_NAVY)
-    f_loveseat(h, cx - 9.7, FY, cz + 4.5, SOFA_NAVY, roty=180)
+    f_loveseat(h, cx - 10.4, FY, cz + 4.5, SOFA_NAVY, roty=90)
     f_coffee_table(h, cx - 5, FY, cz - 1)
-    f_tv(h, cx - 5, FY, cz - 8.2, roty=180, w=6)
-    f_bookshelf(h, cx + 8.8, FY, cz + 4, roty=-90, w=8, hgt=7)
+    f_tv(h, cx - 9.7, FY, cz - 8.2, roty=180, w=4)
+    f_bookshelf(h, cx + 11, FY, cz + 4, roty=-90, w=8, hgt=7)
     f_floorlamp(h, cx - 10, FY, cz + 7)
     f_plant(h, cx + 9.3, FY, cz - 4.5, big=True)
     f_painting(h, cx - 11.5, FY + 5.5, cz + 4, roty=90, color=(40, 70, 120))
@@ -740,11 +763,11 @@ def build_ModernCube(cx, cz, FY, hname):
     f_stairs(h, cx - 10, FY, cz - 6.5, steps=10, rise=1.0, run_=0.8, w=3.4,
              dirz=1)
     f_railing(h, cx - 8, FY + 9.7, cz - 3.25, length=8.5, roty=90)
-    f_bed(h, cx - 5, FY + 10, cz + 4, roty=0, size=1.1, headcolor=MAHOGANY)
-    f_nightstand(h, cx - 8.5, FY + 10, cz + 2)
-    f_nightstand(h, cx - 1.5, FY + 10, cz + 1)
-    f_wardrobe(h, cx + 2, FY + 10, cz + 7.6, w=8)
-    f_rug(h, cx - 4.5, FY + 10, cz + 1, 7, 6, CARPET_CREAM, border=GOLD)
+    f_bed(h, cx - 4.2, FY + 10, cz + 4, roty=0, size=1.1, headcolor=MAHOGANY)
+    f_nightstand(h, cx - 7.7, FY + 10, cz + 2)
+    f_nightstand(h, cx - 0.7, FY + 10, cz + 1)
+    f_wardrobe(h, cx + 3.2, FY + 10, cz + 7.6, w=8)
+    f_rug(h, cx - 3.7, FY + 10, cz + 1, 7, 6, CARPET_CREAM, border=GOLD)
     f_armchair(h, cx - 6.5, FY + 10, cz - 5, roty=45)
     f_painting(h, cx, FY + 15, cz - 8.8, color=(90, 40, 90))
     f_bathroom(h, cx + 6, FY + 10, cz - 6)
@@ -797,18 +820,18 @@ def build_AFrame(cx, cz, FY, hname):
         H(h, part(f"Beam{bz}", (5, 0.5, 0.5), (cx, FY + 10.5, cz + bz), DARKWOOD,
                   WOOD, cancollide=False))
 
-    f_fireplace(h, cx + 2.5, FY, cz + 7.5, roty=180, w=3.5, chimney=False)
-    H(h, part("Chimney", (1.5, 4, 1.2), (cx + 1.5, FY + 7.5, cz + 7.5), (95, 50, 44),
+    f_fireplace(h, cx + 2.5, FY, cz + 8.6, roty=0, w=3.5, chimney=False)
+    H(h, part("Chimney", (1.5, 4, 1.2), (cx + 2.5, FY + 9, cz + 8.6), (95, 50, 44),
               BRICK))
-    f_rug(h, cx, FY, cz + 1, 9, 7, (120, 70, 40), border=(90, 52, 30))
-    f_sofa(h, cx - 3, FY, cz + 1.5, (110, 75, 55), roty=0)
-    f_armchair(h, cx + 2, FY, cz - 1, (110, 75, 55), roty=-135)
-    f_coffee_table(h, cx, FY, cz - 1, w=3.5, mat=WOOD, color=WOODC, leg=BRONZE)
-    f_tv(h, cx - 5.4, FY, cz - 2, roty=90, w=4)
+    f_rug(h, cx - 1, FY, cz - 1, 9, 7, (120, 70, 40), border=(90, 52, 30))
+    f_sofa(h, cx - 2.4, FY, cz - 2, (110, 75, 55), roty=90)
+    f_armchair(h, cx + 2, FY, cz - 2, (110, 75, 55), roty=135)
+    f_coffee_table(h, cx - 0.5, FY, cz - 2, w=3.5, mat=WOOD, color=WOODC, leg=BRONZE)
+    f_tv(h, cx - 5.6, FY, cz - 2, roty=-90, w=4)
     f_bookshelf(h, cx + 3.3, FY, cz + 3, roty=-90, w=5, hgt=6)
     f_floorlamp(h, cx - 6.5, FY, cz - 5)
-    f_plant(h, cx + 2.2, FY, cz - 5.5)
-    f_dining(h, cx, FY, cz - 6, seats=4, w=4.5)
+    f_plant(h, cx - 5.8, FY, cz - 6.5)
+    f_dining(h, cx + 3.6, FY, cz - 5.8, seats=4, w=4.5, roty=90)
     f_chandelier(h, cx, FY + 13.6, cz, 0.8, tiers=1, bulbs_per=5)
     for bz in (-6, 0, 6):
         H(h, part(f"Antler{bz}", (2, 0.8, 0.4), (cx, FY + 12.6, cz + bz), BRONZE,
@@ -944,7 +967,7 @@ def build_Castle(cx, cz, FY, hname):
             H(h, part(f"Spiral{fl}_{s}", (2.6, 0.4, 1.6),
                       (sx_, FY + fl * 6 + 0.7 + s * 0.53, sz_), (200, 200, 205),
                       SLATE, roty=math.degrees(a) + 90))
-    H(h, part("TowerDoor", (2.6, 5.6, 0.4), (tx, FY + 2.8, tz - TR_ + 0.3),
+    H(h, part("Door", (2.2, 5.2, 0.4), (tx, FY + 2.6, tz - TR_ + 0.3),
               DARKWOOD, WOOD))
     f_chandelier(h, tx, FY + 4.9, tz, 0.9, tiers=1, bulbs_per=5)
     f_chandelier(h, tx, FY + 10.5, tz, 0.9, tiers=1, bulbs_per=5)
@@ -1013,12 +1036,12 @@ def build_VillaL(cx, cz, FY, hname):
               cancollide=False))
 
     # F1: open living + kitchen
-    f_rug(h, cx - 4, FY, cz + 1, 10, 8, (185, 160, 110), border=(150, 128, 85))
-    f_sofa(h, cx - 5, FY, cz + 3.5, (100, 105, 118), w=7)
-    f_coffee_table(h, cx - 5, FY, cz, w=4)
-    f_tv(h, cx - 5, FY, cz - 5.5, roty=180, w=5)
-    f_kitchen(h, cx + 7, FY, cz - 6, run=10)
-    f_dining(h, cx + 5, FY, cz + 1, seats=6, w=6)
+    f_rug(h, cx - 5.5, FY, cz + 0.5, 10, 8, (185, 160, 110), border=(150, 128, 85))
+    f_sofa(h, cx - 4.5, FY, cz + 0.5, (100, 105, 118), w=7, roty=90)
+    f_coffee_table(h, cx - 6.8, FY, cz + 0.5, w=4)
+    f_tv(h, cx - 8.4, FY, cz + 0.5, roty=-90, w=5)
+    f_kitchen(h, cx + 4.5, FY, cz + 5.6, roty=180, run=8, fridge=True)
+    f_dining(h, cx + 6, FY, cz - 1.5, seats=6, w=6)
     f_chandelier(h, cx + 5, FY + 8.4, cz + 1, 1.0, tiers=2, bulbs_per=5)
     f_plant(h, cx + 9.5, FY, cz + 5.5, big=True)
     f_painting(h, cx - 9.6, FY + 5, cz - 2, roty=90, color=(200, 140, 60))
@@ -1045,13 +1068,13 @@ def build_VillaL(cx, cz, FY, hname):
     H(h, part("StairLanding", (1.8, 0.5, 2.75), (cx + 8.6, FY + 9.75,
               cz + 5.625), MARBLEC, MARBLE))
     f_railing(h, cx + 4.5, FY + 9.7, cz + 3.75, length=10, roty=0)
-    f_railing(h, cx + 14.5, FY + 9.7, cz + 12.4, length=9, roty=0)
-    f_bed(h, cx - 5, FY + 10, cz + 3, size=1.05, headcolor=MAHOGANY)
-    f_nightstand(h, cx - 8.5, FY + 10, cz)
-    f_rug(h, cx - 5, FY + 10, cz, 8, 6, CARPET_CREAM, border=(170, 150, 120))
+    f_railing(h, cx + 9.5, FY + 9.7, cz + 10.5, length=7, roty=90)
+    f_bed(h, cx - 5, FY + 10, cz + 4.2, roty=180, size=1.05, headcolor=MAHOGANY)
+    f_nightstand(h, cx - 8.5, FY + 10, cz + 2)
+    f_rug(h, cx - 5, FY + 10, cz + 1, 8, 6, CARPET_CREAM, border=(170, 150, 120))
     f_bathroom(h, cx + 5, FY + 10, cz + 2.5)
     f_wardrobe(h, cx - 5, FY + 10, cz - 5.5, w=5)
-    f_bed(h, cx + 15, FY + 10, cz + 10, roty=180, size=0.9, headcolor=MAHOGANY)
+    f_bed(h, cx + 15, FY + 10, cz + 9.8, roty=180, size=0.9, headcolor=MAHOGANY)
     f_rug(h, cx + 15, FY + 10, cz + 7, 6, 5, CARPET_PURPLE)
     f_painting(h, cx + 9.7, FY + 15, cz + 7, roty=-90, color=(40, 90, 130))
 
@@ -1104,11 +1127,11 @@ def build_Dome(cx, cz, FY, hname):
     f_armchair(h, cx - 3.2, FY, cz - 2.4, SOFA_BEIGE, roty=60)
     f_loveseat(h, cx + 3.2, FY, cz - 2.4, SOFA_BEIGE, roty=-60)
     f_coffee_table(h, cx, FY, cz - 3.5, w=3, mat=WOOD, color=DARKWOOD)
-    f_plant(h, cx - 2.2, FY, cz - 6.5, big=True)
-    f_plant(h, cx + 2.2, FY, cz - 6.5, big=True)
+    f_plant(h, cx - 3.4, FY, cz - 5.6, big=True)
+    f_plant(h, cx + 3.4, FY, cz - 5.6, big=True)
     f_bookshelf(h, cx + 3.6, FY, cz + 4.4, roty=-90, w=5, hgt=5)
-    f_floorlamp(h, cx + 4.2, FY, cz - 6.2)
-    f_painting(h, cx - 8.1, FY + 4.5, cz + 2, roty=63, color=(80, 120, 160))
+    f_floorlamp(h, cx + 1.4, FY, cz - 6.8)
+    f_painting(h, cx - 7.7, FY + 4.5, cz + 2, roty=90, color=(80, 120, 160))
 
     # zen ring: rocks + mini trees around dome
     for i in range(10):
@@ -1179,7 +1202,7 @@ def build_ZenHouse(cx, cz, FY, hname):
     for dx, dz in ((-2.2, -2.6), (2.2, -2.6), (-2.2, 1.4), (2.2, 1.4)):
         H(h, part("Cushion", (1.8, 0.4, 1.8), (cx - 4 + dx, FY + 0.5, cz - 1 + dz),
                   (170, 60, 60), FABRIC))
-    f_bed(h, cx + 6.5, FY, cz + 4.5, roty=0, size=0.9, headcolor=DARKWOOD)
+    f_bed(h, cx + 6.5, FY, cz + 4.5, roty=180, size=0.9, headcolor=DARKWOOD)
     f_rug(h, cx + 6.5, FY, cz + 2, 6, 5, (170, 60, 60), border=(120, 40, 40))
     f_bookshelf(h, cx + 9.8, FY, cz - 4, roty=-90, w=5, hgt=6)
     f_plant(h, cx - 9, FY, cz + 5, big=True)
@@ -1255,12 +1278,12 @@ def build_TinyHouse(cx, cz, FY, hname):
     f_window(h, cx - 5.7, FY + 4.2, cz + 2, w=2.6, hgt=3.2, roty=90, t=0.45)
 
     f_rug(h, cx - 1.5, FY, cz + 1, 5, 5, (160, 100, 60), border=(120, 75, 45))
-    f_sofa(h, cx - 2, FY, cz + 2.5, (150, 110, 70), w=4)
+    f_sofa(h, cx - 3, FY, cz + 2.5, (150, 110, 70), w=4)
     f_coffee_table(h, cx - 1.5, FY, cz, w=2.8, mat=WOOD, color=WOODC, leg=BRONZE)
-    f_tv(h, cx - 3.4, FY, cz - 4.2, roty=90, w=3.2)
-    f_bed(h, cx + 2.9, FY, cz + 2.6, roty=90, size=0.85, headcolor=DARKWOOD)
-    f_nightstand(h, cx + 2.9, FY, cz - 0.4)
-    f_kitchen(h, cx - 1, FY, cz + 5.2, run=8, fridge=False)
+    f_tv(h, cx - 2, FY, cz - 4.6, roty=180, w=3.2)
+    f_bed(h, cx + 2.2, FY, cz + 2.0, roty=90, size=0.85, headcolor=DARKWOOD)
+    f_nightstand(h, cx + 2.2, FY, cz - 0.6)
+    f_kitchen(h, cx - 1, FY, cz + 4.9, run=8, fridge=False)
     f_plant(h, cx + 4.8, FY, cz - 4.8)
     f_lantern(h, cx - 5.5, cz - 9.5, y=FY)
     f_lantern(h, cx + 5.5, cz - 9.5, y=FY)
@@ -1334,7 +1357,7 @@ def build_Mansion(cx, cz, FY, hname):
     f_sofa(h, cx - 13.5, FY, cz - 2, SOFA_BEIGE, roty=90, w=7)
     f_sofa(h, cx - 4.5, FY, cz - 2, SOFA_BEIGE, roty=-90, w=7)
     f_coffee_table(h, cx - 9, FY, cz - 1, w=5)
-    f_fireplace(h, cx - 9, FY, cz + 10.5, roty=180, w=6, chimney=True)
+    f_fireplace(h, cx - 9, FY, cz + 10.2, roty=0, w=6, chimney=True)
     f_painting(h, cx - 17.4, FY + 12, cz - 4, roty=90, w=5, hgt=3.5,
                color=(70, 50, 110))
     f_painting(h, cx - 17.4, FY + 12, cz + 4, roty=90, w=5, hgt=3.5,
@@ -1342,24 +1365,24 @@ def build_Mansion(cx, cz, FY, hname):
     f_plant(h, cx - 15.5, FY, cz + 8.5, big=True)
     f_plant(h, cx - 2.5, FY, cz + 8.5, big=True)
     f_dining(h, cx + 10, FY, cz + 4, seats=8, w=9)
-    f_kitchen(h, cx + 12, FY, cz + 9.5, roty=180, run=12)
+    f_kitchen(h, cx + 9.4, FY, cz + 10.3, roty=0, run=10)
     f_bookshelf(h, cx + 16.4, FY, cz + 4, roty=-90, w=7, hgt=9)
 
     # F2: 3 suites (stairs at right, 11 steps land flush on F2 floor)
     f_stairs(h, cx + 14, FY, cz - 6.55, steps=11, rise=1.09, run_=0.76, w=4, dirz=1)
-    f_railing(h, cx + 10, FY + 11.7, cz - 11, length=8, roty=90)
-    f_bed(h, cx - 12, FY + 12, cz + 6, size=1.15, headcolor=MAHOGANY)
-    f_nightstand(h, cx - 15.5, FY + 12, cz + 3)
-    f_nightstand(h, cx - 8.5, FY + 12, cz + 3)
-    f_rug(h, cx - 12, FY + 12, cz + 3, 9, 8, CARPET_CREAM, border=GOLD)
-    f_wardrobe(h, cx - 12, FY + 12, cz - 4, w=9)
-    f_bathroom(h, cx - 5, FY + 12, cz - 7)
-    f_bed(h, cx + 2, FY + 12, cz + 7, roty=0, size=1.0, headcolor=MAHOGANY)
+    f_railing(h, cx + 10, FY + 11.7, cz - 2.7, length=9, roty=90)
+    f_bed(h, cx - 12, FY + 12, cz + 6.4, roty=180, size=1.15, headcolor=MAHOGANY)
+    f_nightstand(h, cx - 15.5, FY + 12, cz + 5)
+    f_nightstand(h, cx - 8.5, FY + 12, cz + 5)
+    f_rug(h, cx - 12, FY + 12, cz + 4, 9, 8, CARPET_CREAM, border=GOLD)
+    f_wardrobe(h, cx - 12, FY + 12, cz + 1.2, w=9)
+    f_bathroom(h, cx + 2, FY + 12, cz - 8.2)
+    f_bed(h, cx + 2, FY + 12, cz + 7.6, roty=180, size=1.0, headcolor=MAHOGANY)
     f_rug(h, cx + 2, FY + 12, cz + 4, 8, 7, CARPET_PURPLE)
-    f_bookshelf(h, cx + 2, FY + 12, cz - 6, roty=180, w=6, hgt=7)
-    f_bed(h, cx - 4, FY + 12, cz + 3.5, size=0.95, headcolor=DARKWOOD)
+    f_bookshelf(h, cx + 16.4, FY + 12, cz + 8, roty=-90, w=6, hgt=7)
+    f_bed(h, cx - 6.5, FY + 12, cz - 4.5, roty=0, size=0.95, headcolor=DARKWOOD)
     f_chandelier(h, cx - 12, FY + 21.6, cz + 2, 1.3, tiers=2, bulbs_per=6)
-    f_painting(h, cx, FY + 17, cz - 11.7, color=(90, 40, 90))
+    f_painting(h, cx, FY + 17, cz - 12.4, color=(90, 40, 90))
 
     # yard: fountain, hedges, gazebo
     f_fountain(h, cx, cz - 22)
