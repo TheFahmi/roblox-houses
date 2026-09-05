@@ -502,8 +502,8 @@ def f_painting(h, x, y, z, roty=0, w=3, hgt=2.2, color=(60, 90, 140)):
 
 def f_plant(h, x, y, z, big=False):
     s = 1.6 if big else 1.0
-    H(h, part("Pot", (1.4 * s, 1.2 * s, 1.2 * s), (x, y + 0.7 * s, z), POTC,
-              WOOD, shape=CYL, rotz=90))
+    H(h, part("Pot", (1.2 * s, 1.4 * s, 1.2 * s), (x, y + 0.7 * s, z), POTC,
+              WOOD, shape=CYL))
     H(h, part("PlantStem", (0.3, 1.2 * s, 0.3), (x, y + 1.9 * s, z), PLANT_DARK,
               GRASS, cancollide=False))
     H(h, part("PlantLeaves", (2 * s, 2.2 * s, 2 * s), (x, y + 2.9 * s, z),
@@ -603,8 +603,8 @@ def f_fountain(h, x, z, y=0):
               shape=CYL, rotz=90))
     H(h, part("FountainWater", (0.7, 10.5, 10.5), (x, y + 1.1, z), POOL_WATER,
               GLASS, transparency=0.3, shape=CYL, rotz=90, cancollide=False))
-    H(h, part("FountainPillar", (3, 1.6, 1.6), (x, y + 2.4, z), MARBLEC, MARBLE,
-              shape=CYL, rotz=90))
+    H(h, part("FountainPillar", (1.6, 3, 1.6), (x, y + 2.4, z), MARBLEC,
+              MARBLE, shape=CYL))
     H(h, part("FountainTop", (0.5, 3.4, 3.4), (x, y + 4, z), MARBLEC, MARBLE,
               shape=CYL, rotz=90))
     H(h, part("FountainOrb", (1.4, 1.4, 1.4), (x, y + 4.9, z), GOLD, FOIL,

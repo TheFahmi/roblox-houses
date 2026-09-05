@@ -93,30 +93,53 @@ for _, folder in ipairs(houseFolders()) do
 		local price = PRICES[baseName(folder.Name)]
 		local sign = Instance.new("Part")
 		sign.Name = "SaleSign"
-		sign.Size = Vector3.new(0.6, 5, 0.6)
+		sign.Size = Vector3.new(7, 5, 0.4)
 		sign.Color = Color3.fromRGB(87, 60, 42)
 		sign.Material = Enum.Material.Wood
 		sign.Anchored = true
-		sign.CFrame = door.CFrame * CFrame.new(door.Size.X / 2 + 4, 1.5, 5)
-		sign.Parent = folder
+		-- panel faces the same way as the door, offset to its right side
+		local base = door.Position + door.CFrame.RightVector
+			* (door.Size.X / 2 + 6) + door.CFrame.LookVector * 5
+			+ Vector3.new(0, -door.Size.Y / 2 + 4.5, 0)
+		sign.CFrame = CFrame.new(base, base + door.CFrame.LookVector)
+		local post = Instance.new("Part")
+		post.Name = "SaleSignPost"
+		post.Size = Vector3.new(0.6, 4.5, 0.6)
+		post.Color = Color3.fromRGB(60, 42, 30)
+		post.Material = Enum.Material.Wood
+		post.Anchored = true
+		post.CFrame = sign.CFrame * CFrame.new(0, -4.5, 0)
+		post.Parent = folder
 
-		local gui = Instance.new("BillboardGui")
+		local function makeLabel(gui, name)
+			local l = Instance.new("TextLabel")
+			l.Name = name
+			l.Size = UDim2.new(1, 0, 1, 0)
+			l.BackgroundColor3 = Color3.fromRGB(30, 22, 16)
+			l.BackgroundTransparency = 0.2
+			l.TextColor3 = Color3.new(1, 1, 1)
+			l.TextScaled = true
+			l.Font = Enum.Font.GothamBold
+			l.Parent = gui
+			return l
+		end
+		local gui = Instance.new("SurfaceGui")
 		gui.Name = "SignGui"
-		gui.Size = UDim2.new(0, 380, 0, 130)
-		gui.StudsOffset = Vector3.new(0, 3.6, 0)
-		gui.AlwaysOnTop = true
-		gui.MaxDistance = 150
+		gui.Face = Enum.NormalId.Front
 		gui.Parent = sign
-		local label = Instance.new("TextLabel")
-		label.Name = "Text"
-		label.Size = UDim2.new(1, 0, 1, 0)
-		label.BackgroundColor3 = Color3.new(0, 0, 0)
-		label.BackgroundTransparency = 0.35
-		label.TextColor3 = Color3.new(1, 1, 1)
-		label.TextScaled = true
-		label.Font = Enum.Font.GothamBold
-		label.Text = string.format("🏠 %s\n$%d — klik untuk beli!", folder.Name, price)
-		label.Parent = gui
+		local label = makeLabel(gui, "Text")
+		local gui2 = Instance.new("SurfaceGui")
+		gui2.Name = "SignGuiBack"
+		gui2.Face = Enum.NormalId.Back
+		gui2.Parent = sign
+		local label2 = makeLabel(gui2, "TextBack")
+
+		local function setText(t)
+			label.Text = t
+			label2.Text = t
+		end
+		setText(string.format("%s\n$%d\nklik untuk beli",
+			baseName(folder.Name), price))
 
 		local click = Instance.new("ClickDetector")
 		click.MaxActivationDistance = 20
@@ -127,17 +150,17 @@ for _, folder in ipairs(houseFolders()) do
 			local cash = ls and ls:FindFirstChild("Cash")
 			if not cash then return end
 			if folder:GetAttribute("OwnerId") then
-				label.Text = string.format("🏠 %s\nmilik %s", folder.Name,
-					folder:GetAttribute("OwnerName"))
+				setText(string.format("%s\nmilik %s", baseName(folder.Name),
+					folder:GetAttribute("OwnerName")))
 				return
 			end
 			if cash.Value < price then
-				label.Text = string.format("🏠 %s\nbutuh $%d (kamu punya $%d)",
-					folder.Name, price, cash.Value)
+				setText(string.format("%s\nbutuh $%d (kamu punya $%d)",
+					baseName(folder.Name), price, cash.Value))
 				task.delay(2, function()
 					if not folder:GetAttribute("OwnerId") then
-						label.Text = string.format("🏠 %s\n$%d — klik untuk beli!",
-							folder.Name, price)
+						setText(string.format("%s\n$%d\nklik untuk beli",
+							baseName(folder.Name), price))
 					end
 				end)
 				return
@@ -150,7 +173,8 @@ for _, folder in ipairs(houseFolders()) do
 					d:SetAttribute("OwnerId", player.UserId)
 				end
 			end
-			label.Text = string.format("🏠 %s\nmilik %s 🎉", folder.Name, player.Name)
+			setText(string.format("%s\nmilik %s 🎉",
+				baseName(folder.Name), player.Name))
 		end)
 	end
 end
