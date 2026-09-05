@@ -10,6 +10,32 @@ local PRICES = {
 	Dome = 2500, VillaL = 3000, Castle = 5000, Mansion = 8000,
 }
 
+-- DataStore persistence (works in published games; silent no-op in Studio
+-- unless "Enable Studio Access to API Services" is on)
+local store
+pcall(function()
+	store = game:GetService("DataStoreService"):GetDataStore("HouseGame_v1")
+end)
+
+local function loadCash(player)
+	if not store then return nil end
+	local ok, data = pcall(function()
+		return store:GetAsync("cash_" .. player.UserId)
+	end)
+	return ok and data or nil
+end
+
+local function saveCash(player)
+	if not store then return end
+	local ls = player:FindFirstChild("leaderstats")
+	local cash = ls and ls:FindFirstChild("Cash")
+	if cash then
+		pcall(function()
+			store:SetAsync("cash_" .. player.UserId, cash.Value)
+		end)
+	end
+end
+
 Players.PlayerAdded:Connect(function(player)
 	local ls = Instance.new("Folder")
 	ls.Name = "leaderstats"
@@ -18,6 +44,10 @@ Players.PlayerAdded:Connect(function(player)
 	cash.Value = 200
 	cash.Parent = ls
 	ls.Parent = player
+	local saved = loadCash(player)
+	if saved then
+		cash.Value = saved
+	end
 end)
 
 task.spawn(function() -- passive income
@@ -29,6 +59,15 @@ task.spawn(function() -- passive income
 			if cash then
 				cash.Value += 15
 			end
+		end
+	end
+end)
+
+task.spawn(function() -- autosave every 60s
+	while true do
+		task.wait(60)
+		for _, player in ipairs(Players:GetPlayers()) do
+			saveCash(player)
 		end
 	end
 end)
@@ -273,6 +312,185 @@ for _, door in ipairs(workspace:GetDescendants()) do
 		end)
 	end
 end
+
+-- ================= saving: leave + shutdown =================
+Players.PlayerRemoving:Connect(saveCash)
+game:BindToClose(function()
+	for _, player in ipairs(Players:GetPlayers()) do
+		saveCash(player)
+	end
+end)
+
+-- ================= courier job: route of house drop-offs =================
+-- Depot near spawn -> touch drop pad at each house in order -> route bonus.
+local PAID_PER_LEG = 40
+local ROUTE = { "TinyHouse", "AFrame", "ModernCube", "Castle", "Dome",
+	"VillaL", "Mansion", "ZenHouse" }
+local jobs = {} -- player -> current stop name
+
+local function makePart(name, size, pos, color)
+	local part = Instance.new("Part")
+	part.Name = name
+	part.Size = size
+	part.Color = color
+	part.Material = Enum.Material.Wood
+	part.Anchored = true
+	part.Position = pos
+	part.Parent = workspace
+	return part
+end
+
+local DEPOT_POS = Vector3.new(0, 3.5, 35) -- plaza, near spawn
+makePart("CourierDepot", Vector3.new(6, 7, 6), DEPOT_POS,
+	Color3.fromRGB(110, 52, 38))
+
+local depotGui = Instance.new("BillboardGui")
+depotGui.Size = UDim2.new(0, 340, 0, 100)
+depotGui.StudsOffset = Vector3.new(0, 5, 0)
+depotGui.AlwaysOnTop = true
+depotGui.MaxDistance = 150
+depotGui.Parent = workspace.CourierDepot
+local depotLabel = Instance.new("TextLabel")
+depotLabel.Size = UDim2.new(1, 0, 1, 0)
+depotLabel.BackgroundTransparency = 1
+depotLabel.TextColor3 = Color3.new(1, 1, 1)
+depotLabel.TextStrokeTransparency = 0.2
+depotLabel.TextScaled = true
+depotLabel.Font = Enum.Font.GothamBold
+depotLabel.Text = "📦 KURIR\ndekati kotak & klik untuk mulai/stop ($40/antaran)"
+depotLabel.Parent = depotGui
+
+-- invisible drop pads in front of every house door
+local dropPads = {}
+for _, folder in ipairs(houseFolders()) do
+	local door = folder:FindFirstChild("Door", true)
+	if door and door:IsA("BasePart") then
+		local pad = Instance.new("Part")
+		pad.Name = "DropPad_" .. folder.Name
+		pad.Size = Vector3.new(6, 0.4, 6)
+		pad.Transparency = 1
+		pad.Anchored = true
+		pad.CanCollide = false
+		pad.CFrame = door.CFrame * CFrame.new(door.Size.X / 2 + 5,
+			-door.Size.Y / 2 + 0.3, -6)
+		pad.Parent = folder
+		dropPads[folder.Name] = pad
+	end
+end
+
+local carriedBox = {} -- player -> box part
+local function attachBox(player)
+	if carriedBox[player] then return end
+	local char = player.Character
+	local head = char and char:FindFirstChild("Head")
+	if not head then return end
+	local box = Instance.new("Part")
+	box.Name = "CarryBox"
+	box.Size = Vector3.new(2.2, 2.2, 2.2)
+	box.Color = Color3.fromRGB(170, 130, 80)
+	box.CanCollide = false
+	box.CFrame = head.CFrame * CFrame.new(0, 2.6, 0)
+	local weld = Instance.new("WeldConstraint")
+	weld.Part0 = head
+	weld.Part1 = box
+	weld.Parent = box
+	box.Parent = char
+	carriedBox[player] = box
+end
+
+local function detachBox(player)
+	if carriedBox[player] then
+		carriedBox[player]:Destroy()
+		carriedBox[player] = nil
+	end
+end
+
+local jobLabel = {} -- player -> TextLabel
+local function setJobText(player, text)
+	local label = jobLabel[player]
+	if not label and player.Parent then
+		local gui = Instance.new("BillboardGui")
+		gui.Size = UDim2.new(0, 380, 0, 60)
+		gui.StudsOffset = Vector3.new(0, 5, 0)
+		gui.AlwaysOnTop = true
+		gui.Adornee = player.Character and player.Character:FindFirstChild("Head")
+		gui.Parent = player.PlayerGui
+		label = Instance.new("TextLabel")
+		label.Size = UDim2.new(1, 0, 1, 0)
+		label.BackgroundTransparency = 1
+		label.TextColor3 = Color3.new(1, 1, 0.4)
+		label.TextStrokeTransparency = 0.3
+		label.TextScaled = true
+		label.Font = Enum.Font.GothamBold
+		label.Parent = gui
+		jobLabel[player] = label
+	end
+	if label then
+		label.Text = text or ""
+		label.Parent.Enabled = text ~= nil
+		if player.Character then
+			label.Parent.Adornee = player.Character:FindFirstChild("Head")
+		end
+	end
+end
+
+local depotClick = Instance.new("ClickDetector")
+depotClick.MaxActivationDistance = 16
+depotClick.Parent = workspace.CourierDepot
+depotClick.MouseClick:Connect(function(player)
+	if jobs[player] then
+		jobs[player] = nil
+		detachBox(player)
+		setJobText(player, "Kerja selesai. Uang tetap aman.")
+		task.delay(3, function()
+			if not jobs[player] then
+				setJobText(player, nil)
+			end
+		end)
+		return
+	end
+	jobs[player] = ROUTE[1]
+	attachBox(player)
+	setJobText(player, "📦 Antar ke: " .. ROUTE[1])
+end)
+
+for houseName, pad in pairs(dropPads) do
+	pad.Touched:Connect(function(hit)
+		local player = getPlayer(hit)
+		if not player or jobs[player] ~= houseName then return end
+		local ls = player:FindFirstChild("leaderstats")
+		local cash = ls and ls:FindFirstChild("Cash")
+		if not cash then return end
+		local idx = table.find(ROUTE, houseName)
+		local nxt = ROUTE[idx + 1]
+		cash.Value += PAID_PER_LEG
+		if nxt then
+			jobs[player] = nxt
+			attachBox(player)
+			setJobText(player, "✅ +$" .. PAID_PER_LEG .. " — antar ke: " .. nxt)
+		else
+			cash.Value += 100 -- full-route bonus
+			jobs[player] = nil
+			detachBox(player)
+			setJobText(player, "🎉 Rute selesai! +$" .. PAID_PER_LEG
+				.. " +$100 bonus. Klik depot untuk mulai lagi.")
+			task.delay(4, function()
+				if not jobs[player] then
+					setJobText(player, nil)
+				end
+			end)
+		end
+	end)
+end
+
+Players.PlayerRemoving:Connect(function(player)
+	jobs[player] = nil
+	detachBox(player)
+	if jobLabel[player] then
+		jobLabel[player].Parent:Destroy()
+		jobLabel[player] = nil
+	end
+end)
 
 print("HouseLogic loaded")
 ]]></ProtectedString></Properties></Item></Item><Item class="Lighting" referent="RBX2349"><Properties><Color3uint8 name="Ambient">4286084730</Color3uint8><Color3uint8 name="OutdoorAmbient">4288714380</Color3uint8><float name="Brightness">2.8</float><float name="ClockTime">14.5</float><Color3uint8 name="FogColor">4291351265</Color3uint8><float name="FogStart">300</float><float name="FogEnd">1200</float><bool name="GlobalShadows">true</bool></Properties></Item></roblox>
