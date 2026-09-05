@@ -638,7 +638,7 @@ for i in range(12):
     H("Shared", part(f"ConnS{i}", (7, 0.2, 8), (-44 + i * 8, 0.1, -8), PATHC,
                      COBBLE))
 
-f_fountain("Shared", 0, 0)
+f_fountain("Shared", -16, -6)
 
 for lx, lz in ((-14, 14), (14, 14), (-14, -14), (14, -14)):
     f_lantern("Shared", lx, lz)
@@ -733,7 +733,7 @@ def build_ModernCube(cx, cz, FY, hname):
 
     # F1: dining + kitchen (right half)
     f_dining(h, cx + 5, FY, cz + 5, seats=6, w=6)
-    f_kitchen(h, cx + 4, FY, cz - 7.5, run=10)
+    f_kitchen(h, cx + 6.4, FY, cz - 7.5, run=5)
     f_chandelier(h, cx + 5, FY + 8.4, cz + 5, 0.9, tiers=1, bulbs_per=4)
 
     # F2: mezzanine — stairs along right wall, master suite
@@ -804,7 +804,7 @@ def build_AFrame(cx, cz, FY, hname):
     f_sofa(h, cx - 3, FY, cz + 1.5, (110, 75, 55), roty=0)
     f_armchair(h, cx + 2, FY, cz - 1, (110, 75, 55), roty=-135)
     f_coffee_table(h, cx, FY, cz - 1, w=3.5, mat=WOOD, color=WOODC, leg=BRONZE)
-    f_tv(h, cx, FY, cz - 9, roty=180, w=4)
+    f_tv(h, cx - 5.4, FY, cz - 2, roty=90, w=4)
     f_bookshelf(h, cx + 3.3, FY, cz + 3, roty=-90, w=5, hgt=6)
     f_floorlamp(h, cx - 6.5, FY, cz - 5)
     f_plant(h, cx + 2.2, FY, cz - 5.5)
@@ -1016,8 +1016,8 @@ def build_VillaL(cx, cz, FY, hname):
     f_rug(h, cx - 4, FY, cz + 1, 10, 8, (185, 160, 110), border=(150, 128, 85))
     f_sofa(h, cx - 5, FY, cz + 3.5, (100, 105, 118), w=7)
     f_coffee_table(h, cx - 5, FY, cz, w=4)
-    f_tv(h, cx - 5, FY, cz - 6, roty=180, w=5)
-    f_kitchen(h, cx + 5, FY, cz - 6, run=10)
+    f_tv(h, cx - 5, FY, cz - 5.5, roty=180, w=5)
+    f_kitchen(h, cx + 7, FY, cz - 6, run=10)
     f_dining(h, cx + 5, FY, cz + 1, seats=6, w=6)
     f_chandelier(h, cx + 5, FY + 8.4, cz + 1, 1.0, tiers=2, bulbs_per=5)
     f_plant(h, cx + 9.5, FY, cz + 5.5, big=True)
@@ -1257,7 +1257,7 @@ def build_TinyHouse(cx, cz, FY, hname):
     f_rug(h, cx - 1.5, FY, cz + 1, 5, 5, (160, 100, 60), border=(120, 75, 45))
     f_sofa(h, cx - 2, FY, cz + 2.5, (150, 110, 70), w=4)
     f_coffee_table(h, cx - 1.5, FY, cz, w=2.8, mat=WOOD, color=WOODC, leg=BRONZE)
-    f_tv(h, cx - 1.5, FY, cz - 4.8, roty=180, w=3.2)
+    f_tv(h, cx - 3.4, FY, cz - 4.2, roty=90, w=3.2)
     f_bed(h, cx + 2.9, FY, cz + 2.6, roty=90, size=0.85, headcolor=DARKWOOD)
     f_nightstand(h, cx + 2.9, FY, cz - 0.4)
     f_kitchen(h, cx - 1, FY, cz + 5.2, run=8, fridge=False)
