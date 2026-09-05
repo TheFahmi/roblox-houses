@@ -1197,9 +1197,164 @@ f_tree(h, cx + 12, cz + 16, s=0.75)
 f_tree(h, cx - 14, cz + 13, s=0.8)
 
 
+# ================================================================ HOUSE G
+# TinyHouse — starter home: small, warm wood, front porch
+h = "TinyHouse"
+cx, cz = 95, 65
+FY = 0.5
+
+H(h, part("Lot", (26, 0.2, 26), (cx, 0.1, cz), (150, 150, 148), CONCRETE))
+H(h, part("Floor", (12, 0.5, 12), (cx, FY - 0.25, cz), WOODC, PLANKS))
+H(h, part("Roof", (13.5, 0.5, 13.5), (cx, FY + 8.7, cz), (105, 70, 50), PLANKS))
+H(h, part("RoofRim", (13.5, 0.7, 13.5), (cx, FY + 8.2, cz), DARKWOOD, WOOD,
+          cancollide=False))
+H(h, part("Porch", (8, 0.4, 4), (cx, FY - 0.1, cz - 8), DARKWOOD, PLANKS))
+for px in (cx - 3.5, cx + 3.5):
+    H(h, part("PorchPost", (0.5, 7, 0.5), (px, FY + 3.5, cz - 9.7), DARKWOOD,
+              WOOD))
+H(h, part("PorchBeam", (8, 0.5, 0.5), (cx, FY + 7, cz - 9.7), DARKWOOD, WOOD))
+
+H(h, part("WallBack", (12, 8, 0.5), (cx, FY + 4, cz + 6), (225, 210, 185),
+          PLASTIC))
+H(h, part("WallL", (0.5, 8, 12), (cx - 6, FY + 4, cz), (225, 210, 185),
+          PLASTIC))
+H(h, part("WallR", (0.5, 8, 12), (cx + 6, FY + 4, cz), (225, 210, 185),
+          PLASTIC))
+H(h, part("WallFrontL", (3.5, 8, 0.5), (cx - 4.25, FY + 4, cz - 6), (225, 210,
+          185), PLASTIC))
+H(h, part("WallFrontR", (3.5, 8, 0.5), (cx + 4.25, FY + 4, cz - 6), (225, 210,
+          185), PLASTIC))
+H(h, part("WallFrontTop", (5, 2.5, 0.5), (cx, FY + 6.75, cz - 6), (225, 210,
+          185), PLASTIC))
+f_door(h, cx, FY, cz - 6, w=4, hgt=5.5, color=(140, 90, 60))
+f_window(h, cx - 4.25, FY + 4.2, cz - 6, w=2.6, hgt=3.2, t=0.45)
+f_window(h, cx + 4.25, FY + 4.2, cz - 6, w=2.6, hgt=3.2, t=0.45)
+f_window(h, cx - 5.7, FY + 4.2, cz + 2, w=2.6, hgt=3.2, roty=90, t=0.45)
+
+f_rug(h, cx - 1.5, FY, cz + 1, 5, 5, (160, 100, 60), border=(120, 75, 45))
+f_sofa(h, cx - 2, FY, cz + 2.5, (150, 110, 70), w=4)
+f_coffee_table(h, cx - 1.5, FY, cz, w=2.8, mat=WOOD, color=WOODC, leg=BRONZE)
+f_tv(h, cx - 1.5, FY, cz - 4.8, roty=180, w=3.2)
+f_bed(h, cx + 2.9, FY, cz + 2.6, roty=90, size=0.85, headcolor=DARKWOOD)
+f_nightstand(h, cx + 2.9, FY, cz - 0.4)
+f_kitchen(h, cx - 1, FY, cz + 5.2, run=8, fridge=False)
+f_plant(h, cx + 4.8, FY, cz - 4.8)
+f_lantern(h, cx - 5.5, cz - 9.5, y=FY)
+f_lantern(h, cx + 5.5, cz - 9.5, y=FY)
+f_fence(h, cx - 12, cz - 12, 24, y=0.2, color=(120, 85, 60))
+f_fence(h, cx + 12, cz - 12, 24, y=0.2, color=(120, 85, 60))
+f_fence(h, cx, cz + 12.8, 24, y=0.2, color=(120, 85, 60))
+f_tree(h, cx - 9, cz + 8, s=0.7)
+f_flowerbed(h, cx + 4, cz - 11, w=8, d=2)
+
+
+# ================================================================ HOUSE H
+# Mansion — top-tier: grand columns, ballroom F1, 3 suites F2, balcony
+h = "Mansion"
+cx, cz = 155, 135
+FY = 0.5
+
+H(h, part("Lot", (56, 0.2, 48), (cx, 0.1, cz), (150, 150, 148), CONCRETE))
+H(h, part("Floor", (36, 0.5, 24), (cx, FY - 0.25, cz), MARBLEC, MARBLE))
+# F2 with stairwell hole (right band x 10..18, z -7.2..1.8)
+H(h, part("Floor2Main", (28, 0.5, 24), (cx - 4, FY + 11.75, cz), MARBLEC,
+          MARBLE))
+H(h, part("Floor2FrontStrip", (8, 0.5, 4.8), (cx + 14, FY + 11.75, cz - 9.6),
+          MARBLEC, MARBLE))
+H(h, part("Floor2MidStrip", (8, 0.5, 5.45), (cx + 14, FY + 11.75, cz + 4.525),
+          MARBLEC, MARBLE))
+H(h, part("Floor2BackStrip", (8, 0.5, 4.75), (cx + 14, FY + 11.75, cz + 9.625),
+          MARBLEC, MARBLE))
+H(h, part("Roof", (38, 0.5, 26), (cx, FY + 22.2, cz), (222, 205, 180), SMOOTH))
+
+H(h, part("WallBack", (36, 22, 0.8), (cx, FY + 11, cz + 12), (225, 218, 200),
+          SMOOTH))
+H(h, part("WallL", (0.8, 22, 24), (cx - 18, FY + 11, cz), (225, 218, 200),
+          SMOOTH))
+H(h, part("WallR", (0.8, 22, 24), (cx + 18, FY + 11, cz), (225, 218, 200),
+          SMOOTH))
+# front: wall segments around 3 doors, tall glass between
+H(h, part("WallFrontLOuter", (2.5, 22, 0.8), (cx - 16.75, FY + 11, cz - 12),
+          (225, 218, 200), SMOOTH))
+H(h, part("WallFrontROuter", (2.5, 22, 0.8), (cx + 16.75, FY + 11, cz - 12),
+          (225, 218, 200), SMOOTH))
+H(h, part("EntryGlassL", (8.25, 22, 0.4), (cx - 6.375, FY + 11, cz - 12),
+          GLASSC, GLASS, transparency=0.42))
+H(h, part("EntryGlassR", (8.25, 22, 0.4), (cx + 6.375, FY + 11, cz - 12),
+          GLASSC, GLASS, transparency=0.42))
+# grand columns
+for px in (cx - 15, cx - 7, cx + 7, cx + 15):
+    for pz in (cz - 14.5,):
+        H(h, part("Column", (1.8, 22, 1.8), (px, FY + 11, pz), (240, 235, 225),
+                  MARBLE))
+H(h, part("Portico", (38, 1, 6), (cx, FY + 22.5, cz - 14.5), (222, 205, 180),
+          SMOOTH))
+H(h, part("PorticoStep", (30, 0.4, 3), (cx, FY + 0.2, cz - 14.5), MARBLEC,
+          MARBLE))
+H(h, part("BalconySlab", (16, 0.5, 5), (cx, FY + 11.5, cz - 14.5), MARBLEC,
+          MARBLE))
+
+f_door(h, cx, FY, cz - 12, w=7, hgt=8, color=DARKWOOD)
+f_door(h, cx - 13, FY, cz - 12, w=5, hgt=7, color=GLASSC)
+f_door(h, cx + 13, FY, cz - 12, w=5, hgt=7, color=GLASSC)
+for wx in (-16, 16):
+    f_window(h, cx + wx, FY + 5, cz - 12, w=4, hgt=6, t=0.42)
+    f_window(h, cx + wx, FY + 17, cz - 12, w=4, hgt=6, t=0.42)
+    f_window(h, cx + wx, FY + 5, cz + 12, w=4, hgt=6, t=0.42)
+    f_window(h, cx + wx, FY + 17, cz + 12, w=4, hgt=6, t=0.42)
+
+# F1: grand ballroom (left) + formal dining (right)
+f_rug(h, cx - 9, FY, cz, 14, 16, CARPET_RED, border=GOLD)
+f_chandelier(h, cx - 9, FY + 21.4, cz, 2.0, tiers=3, bulbs_per=8)
+f_chandelier(h, cx + 9, FY + 21.4, cz, 1.6, tiers=2, bulbs_per=6)
+f_sofa(h, cx - 13.5, FY, cz - 2, SOFA_BEIGE, roty=90, w=7)
+f_sofa(h, cx - 4.5, FY, cz - 2, SOFA_BEIGE, roty=-90, w=7)
+f_coffee_table(h, cx - 9, FY, cz - 1, w=5)
+f_fireplace(h, cx - 9, FY, cz + 10.5, roty=180, w=6, chimney=True)
+f_painting(h, cx - 17.4, FY + 12, cz - 4, roty=90, w=5, hgt=3.5,
+           color=(70, 50, 110))
+f_painting(h, cx - 17.4, FY + 12, cz + 4, roty=90, w=5, hgt=3.5,
+           color=(110, 70, 40))
+f_plant(h, cx - 15.5, FY, cz + 8.5, big=True)
+f_plant(h, cx - 2.5, FY, cz + 8.5, big=True)
+f_dining(h, cx + 10, FY, cz + 4, seats=8, w=9)
+f_kitchen(h, cx + 12, FY, cz + 9.5, roty=180, run=12)
+f_bookshelf(h, cx + 16.4, FY, cz + 4, roty=-90, w=7, hgt=9)
+
+# F2: 3 suites (stairs at right, 11 steps land flush on F2 floor)
+f_stairs(h, cx + 14, FY, cz - 6.55, steps=11, rise=1.09, run_=0.76, w=4, dirz=1)
+f_railing(h, cx + 10, FY + 11.7, cz - 11, length=8, roty=90)
+f_bed(h, cx - 12, FY + 12, cz + 6, size=1.15, headcolor=MAHOGANY)
+f_nightstand(h, cx - 15.5, FY + 12, cz + 3)
+f_nightstand(h, cx - 8.5, FY + 12, cz + 3)
+f_rug(h, cx - 12, FY + 12, cz + 3, 9, 8, CARPET_CREAM, border=GOLD)
+f_wardrobe(h, cx - 12, FY + 12, cz - 4, w=9)
+f_bathroom(h, cx - 5, FY + 12, cz - 7)
+f_bed(h, cx + 2, FY + 12, cz + 7, roty=0, size=1.0, headcolor=MAHOGANY)
+f_rug(h, cx + 2, FY + 12, cz + 4, 8, 7, CARPET_PURPLE)
+f_bookshelf(h, cx + 2, FY + 12, cz - 6, roty=180, w=6, hgt=7)
+f_bed(h, cx - 4, FY + 12, cz + 3.5, size=0.95, headcolor=DARKWOOD)
+f_chandelier(h, cx - 12, FY + 21.6, cz + 2, 1.3, tiers=2, bulbs_per=6)
+f_painting(h, cx, FY + 17, cz - 11.7, color=(90, 40, 90))
+
+# yard: fountain, hedges, gazebo
+f_fountain(h, cx, cz - 22)
+for hx, hz in ((-20, -16), (20, -16), (-20, 16), (20, 16)):
+    H(h, part("Hedge", (6, 3, 2), (cx + hx, FY + 1.5, cz + hz), (50, 110, 60),
+              GRASS))
+f_fence(h, cx - 27, cz - 23, 54, y=0.2)
+f_fence(h, cx + 27, cz - 23, 54, y=0.2)
+f_fence(h, cx - 12, cz + 23.8, 30, y=0.2)
+f_fence(h, cx + 12, cz + 23.8, 30, y=0.2)
+f_tree(h, cx - 22, cz + 18, s=1.1)
+f_tree(h, cx + 22, cz + 18, s=1.1)
+f_flowerbed(h, cx - 12, cz - 21, w=10, d=2.5)
+f_flowerbed(h, cx + 12, cz - 21, w=10, d=2.5)
+
+
 # ================================================================ assemble
-order = ["Shared", "ModernCube", "AFrame", "Castle", "VillaL", "Dome",
-         "ZenHouse"]
+order = ["Shared", "TinyHouse", "ZenHouse", "AFrame", "ModernCube", "Dome",
+         "VillaL", "Castle", "Mansion"]
 inner = ""
 for name in order:
     inner += (f'<Item class="Folder" referent="{ref()}"><Properties>'
@@ -1244,7 +1399,7 @@ n_items = doc.count("<Item class=")
 n_doors = doc.count(">Door<")
 n_houses = sum(1 for name in order[1:] if houses.get(name))
 assert n_doors >= 6, n_doors
-assert n_houses == 6, n_houses
+assert n_houses == 8, n_houses
 lines_gen = sum(1 for _ in open(__file__, encoding="utf-8"))
 print(f"OK {out}: {os.path.getsize(out)} bytes, {n_items} items, "
       f"{n_doors} doors, {n_houses} houses, generator {lines_gen} lines")
