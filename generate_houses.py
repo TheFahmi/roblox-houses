@@ -661,7 +661,7 @@ for i in range(12):
     H("Shared", part(f"ConnS{i}", (7, 0.2, 8), (-44 + i * 8, 0.1, -8), PATHC,
                      COBBLE))
 
-f_fountain("Shared", -16, -6)
+f_fountain("Shared", 0, 0)
 
 for lx, lz in ((-14, 14), (14, 14), (-14, -14), (14, -14)):
     f_lantern("Shared", lx, lz)
