@@ -1382,6 +1382,22 @@ for base, fn, fy, pitch in BUILDERS:
         fn(-60 + u * pitch, row_z, fy, f"{base}#{u + 1}")
         complex_names.append(f"{base}#{u + 1}")
 
+# roads: N-S spine west of all complexes + east-west lane to each row front
+ROAD = (PATHC, COBBLE)
+ROW_ZS = [-120 + 56 * i for i in range(8)]
+# spine x=-94 (west of every lot), z from -150 up past Mansion row
+for i in range(49):
+    H("Shared", part(f"RoadNS{i}", (9, 0.2, 9), (-94, 0.09, -150 + i * 9),
+                     *ROAD))
+# one long lane in front of each complex (row_z - 28: clear of lots/fences,
+# touching the spine at its west end)
+for rz in ROW_ZS:
+    bi = ROW_ZS.index(rz)
+    xe = -60 + 4 * BUILDERS[bi][3] + BUILDERS[bi][3] / 2 + 6
+    length = xe - (-90)
+    H("Shared", part(f"RoadLane{BUILDERS[bi][0]}", (length, 0.2, 8),
+                     ((xe + -90) / 2, 0.11, rz - 28), *ROAD))
+
 order = ["Shared"] + complex_names
 inner = ""
 for name in order:
