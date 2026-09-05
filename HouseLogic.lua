@@ -698,7 +698,8 @@ do
 	local folder = workspace:FindFirstChild("Penthouse")
 	local cab = folder and folder:FindFirstChild("ElevatorBase", true)
 	if cab then
-		local FLOORS = { 0.5, 12.5, 24.5 } -- FY of each level
+		local FLOORS = { 0.5, 12.5, 24.5 } -- FY of each level (pre-scale)
+		local SCALE = 1.75 -- must match generate_houses.py
 		local BASE_X, BASE_Z = cab.Position.X, cab.Position.Z
 		local floorY = 1
 		local moving = false
@@ -706,7 +707,8 @@ do
 		local function goTo(idx)
 			if moving or idx == floorY then return end
 			moving = true
-			local target = Vector3.new(BASE_X, FLOORS[idx] + 0.25, BASE_Z)
+			local target = Vector3.new(BASE_X,
+				(FLOORS[idx] + 0.25) * SCALE, BASE_Z)
 			local dist = math.abs(target.Y - cab.Position.Y)
 			TweenService:Create(cab, TweenInfo.new(dist / 12,
 				Enum.EasingStyle.Sine, Enum.EasingDirection.InOut),
@@ -727,8 +729,8 @@ do
 			btn.Color = Color3.fromRGB(212, 175, 55)
 			btn.Material = Enum.Material.Neon
 			btn.Anchored = true
-			btn.CFrame = CFrame.new(BASE_X + 2.85 * 1.75, fy + 2.2,
-				BASE_Z - 3.5 * 1.75 - 0.5)
+			btn.CFrame = CFrame.new(BASE_X + 2.85 * 1.75,
+				(fy + 2.2) * SCALE, BASE_Z - 3.5 * 1.75 - 0.5)
 			btn.Parent = folderPar
 			local click = Instance.new("ClickDetector")
 			click.MaxActivationDistance = 16
