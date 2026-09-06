@@ -2241,16 +2241,14 @@ pcall(function()
 					if metroInfo.phase == "dwell"
 						and metroInfo.at == si then
 						txt = string.format(
-							"STASIUN %s
-KERETA DI PERON — berangkat %ds",
+							"STASIUN %s\nKERETA DI PERON — berangkat %ds",
 							stop[1],
 							math.max(0, math.ceil(
 								metroInfo.etaAt - os.clock())))
 					elseif metroInfo.phase == "moving"
 						and metroInfo.target == si then
 						txt = string.format(
-							"STASIUN %s
-KERETA MENDEKAT — tiba %ds",
+							"STASIUN %s\nKERETA MENDEKAT — tiba %ds",
 							stop[1],
 							math.max(0, math.ceil(
 								metroInfo.etaAt - os.clock())))
