@@ -1751,7 +1751,6 @@ def build_Penthouse(cx, cz, FY, hname):
                       + 1.25, cz), WHITE, SMOOTH))
             H(h, part(f"RoofTrim{fl}", (31, 0.6, 27), (cx, FY + 24.5
                       + 0.1, cz), GOLD, FOIL, cancollide=False))
-    H(h, part("RoofSlab", (31, 0.5, 27), (cx, FY + 24.25, cz), MARBLEC, MARBLE))
 
     # elevator shaft: corner columns + glass, front openings each floor
     sx, sz = cx, cz + 8
