@@ -708,10 +708,25 @@ pcall(function()
 	local BASE_X, BASE_Z = cab.Position.X, cab.Position.Z
 	local floorY = 1
 	local moving = false
+	local buttons = {}
+
+	local function pulse()
+		for _, b in ipairs(buttons) do
+			local orig = b.Size
+			local t1 = TweenService:Create(b, TweenInfo.new(0.18),
+				{ Size = orig * 0.55 })
+			t1:Play()
+			t1.Completed:Once(function()
+				TweenService:Create(b, TweenInfo.new(0.18),
+					{ Size = orig }):Play()
+			end)
+		end
+	end
 
 	local function goTo(idx)
 		if moving or idx == floorY then return end
 		moving = true
+		pulse()
 		local target = Vector3.new(BASE_X,
 			(FLOORS[idx] + 0.25) * SCALE, BASE_Z)
 		local dist = math.abs(target.Y - cab.Position.Y)
@@ -743,6 +758,7 @@ pcall(function()
 		click.MouseClick:Connect(function()
 			goTo(fl)
 		end)
+		table.insert(buttons, btn)
 	end
 
 	-- fallback: prompt inside the cab cycles to the next floor
