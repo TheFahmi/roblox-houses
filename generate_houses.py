@@ -739,7 +739,13 @@ H("Shared", part("CityPlatformW", (550, 2, 12), (-245, 23, 7), (140, 140,
                  146), CONCRETE))
 H("Shared", part("CityPlatformMid", (8, 2, 12), (34, 23, 7), (140, 140,
                  146), CONCRETE))
-H("Shared", part("CityPlatformE", (482, 2, 12), (279, 23, 7), (140, 140,
+H("Shared", part("CityPlatformE1", (441, 2, 7), (299.5, 23, 4.5), (140,
+                 140, 146), CONCRETE))
+H("Shared", part("CityPlatformE2", (441, 2, 1), (299.5, 23, 12.5), (140,
+                 140, 146), CONCRETE))
+H("Shared", part("CityPlatformE3", (9, 2, 4), (83.5, 23, 10), (140, 140,
+                 146), CONCRETE))
+H("Shared", part("CityPlatformE4", (426, 2, 4), (307, 23, 10), (140, 140,
                  146), CONCRETE))
 # support pillars under the platform
 for px, pz in ((150, 150), (150, 400), (400, 150), (400, 400), (-150, 150),
@@ -973,16 +979,16 @@ for i, ch in enumerate("STASIUN"):
                      (34 - 3.15 + i * 0.9, 27.2, 12.1), (255, 200, 40),
                      NEON, cancollide=False))
 # station elevator: glass shaft x 88..94, stops at station floor & platform
-for px in (88, 94):
-    H("Shared", part("LiftShaftWall", (0.4, 40, 6), (px, 22, 4), GLASSC,
+for px in (88.35, 93.65):
+    H("Shared", part("LiftShaftWall", (0.4, 41, 4), (px, 21.75, 10), GLASSC,
                      GLASS, transparency=0.55))
-H("Shared", part("LiftShaftBack", (6, 40, 0.4), (91, 22, 1), GLASSC, GLASS,
-                 transparency=0.55))
-H("Shared", part("LiftCab", (5.4, 0.5, 5), (91, 3.75, 4), (60, 60, 66),
+H("Shared", part("LiftShaftBack", (6, 41, 0.7), (91, 21.75, 8.35), GLASSC,
+                 GLASS, transparency=0.55))
+H("Shared", part("LiftCab", (5.4, 0.5, 3.6), (91, 3.75, 10), (60, 60, 66),
                  METAL))
-for dx, dz, sx_, sz_ in ((0, -2.4, 5.4, 0.2), (-2.4, 0, 0.2, 5),
-                         (2.4, 0, 0.2, 5)):
-    H("Shared", part("LiftCabWall", (sx_, 3, sz_), (91 + dx, 5.6, 4 + dz),
+for dx, dz, sx_, sz_ in ((0, -1.7, 5.4, 0.2), (-1.7, 0, 0.2, 3.6),
+                         (1.7, 0, 0.2, 3.6)):
+    H("Shared", part("LiftCabWall", (sx_, 3, sz_), (91 + dx, 5.6, 10 + dz),
                      GLASSC, GLASS, transparency=0.3, cancollide=False))
 LIFT_OFF = False
 H("Shared", part("Plaza", (60, 0.3, 40), (0, 0.15, 0), MARBLEC, MARBLE))
