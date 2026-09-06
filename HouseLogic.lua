@@ -775,6 +775,7 @@ pcall(function()
 end)
 
 -- ================= traffic lights: red/yellow/green cycle =================
+local trafficStates = {} -- [idx] = "R"|"Y"|"G"
 do
 	local groups = {}
 	for _, p in ipairs(workspace:GetDescendants()) do
@@ -800,18 +801,187 @@ do
 			for idx, g in pairs(groups) do
 				local offset = (tonumber(idx) - 1) * 6
 				local t = (os.clock() + offset) % 14
+				local state
 				if t < 6 then
-					setLamps(g, "G")
+					state = "G"
 				elseif t < 7 then
-					setLamps(g, "Y")
+					state = "Y"
 				else
-					setLamps(g, "R")
+					state = "R"
 				end
+				trafficStates[idx] = state
+				setLamps(g, state)
 			end
 			task.wait(0.5)
 		end
 	end)
 end
+
+-- ================= police patrol bot: tilang pelanggar lalu lintas ========
+pcall(function()
+	-- build the patrol car (anchored, rides a fixed waypoint loop)
+	local POLICE_WPS = {
+		Vector3.new(0, 1.2, 76.5),
+		Vector3.new(-164.5, 1.2, 76.5),
+		Vector3.new(-164.5, 1.2, 1298.5),
+		Vector3.new(393, 1.2, 1298.5),
+		Vector3.new(-164.5, 1.2, 1298.5),
+		Vector3.new(-164.5, 1.2, 76.5),
+	}
+	local car = Instance.new("Model")
+	car.Name = "PoliceCar"
+	local chassis = Instance.new("Part")
+	chassis.Name = "Chassis"
+	chassis.Size = Vector3.new(7.5, 1, 14)
+	chassis.Color = Color3.fromRGB(240, 240, 240)
+	chassis.Material = Enum.Material.SmoothPlastic
+	chassis.Anchored = true
+	chassis.CFrame = CFrame.new(POLICE_WPS[1])
+	chassis.Parent = car
+	local shell = Instance.new("Part")
+	shell.Name = "Shell"
+	shell.Size = Vector3.new(7.5, 2.2, 14)
+	shell.Color = Color3.fromRGB(25, 25, 28)
+	shell.Material = Enum.Material.SmoothPlastic
+	shell.Anchored = true
+	shell.CanCollide = false
+	shell.CFrame = chassis.CFrame * CFrame.new(0, 1.6, 0)
+	shell.Parent = car
+	local barR = Instance.new("Part")
+	barR.Name = "PoliceBarR"
+	barR.Size = Vector3.new(1.4, 0.8, 2.6)
+	barR.Color = Color3.fromRGB(255, 40, 40)
+	barR.Material = Enum.Material.Neon
+	barR.Anchored = true
+	barR.CanCollide = false
+	barR.CFrame = chassis.CFrame * CFrame.new(-1, 3.2, 0)
+	barR.Parent = car
+	local barB = Instance.new("Part")
+	barB.Name = "PoliceBarB"
+	barB.Size = Vector3.new(1.4, 0.8, 2.6)
+	barB.Color = Color3.fromRGB(40, 60, 255)
+	barB.Material = Enum.Material.Neon
+	barB.Anchored = true
+	barB.CanCollide = false
+	barB.CFrame = chassis.CFrame * CFrame.new(1, 3.2, 0)
+	barB.Parent = car
+	local tag = Instance.new("BillboardGui")
+	tag.Size = UDim2.new(0, 140, 0, 40)
+	tag.StudsOffset = Vector3.new(0, 4.4, 0)
+	tag.AlwaysOnTop = true
+	tag.MaxDistance = 180
+	tag.Parent = shell
+	local tagL = Instance.new("TextLabel")
+	tagL.Size = UDim2.new(1, 0, 1, 0)
+	tagL.BackgroundTransparency = 0.35
+	tagL.BackgroundColor3 = Color3.new(0, 0, 0)
+	tagL.TextColor3 = Color3.fromRGB(120, 180, 255)
+	tagL.TextScaled = true
+	tagL.Font = Enum.Font.GothamBold
+	tagL.Text = "POLISI"
+	tagL.Parent = tag
+	car.PrimaryPart = chassis
+	car.Parent = workspace
+
+	-- light bar flash
+	task.spawn(function()
+		while true do
+			local on = (os.clock() % 0.8) < 0.4
+			barR.Transparency = on and 0 or 0.6
+			barB.Transparency = on and 0.6 or 0
+			task.wait(0.2)
+		end
+	end)
+
+	-- patrol: tween between waypoints at fixed speed (ping-pong)
+	task.spawn(function()
+		local SPEED = 32
+		local i, dir = 1, 1
+		while true do
+			local ni = i + dir
+			if ni < 1 or ni > #POLICE_WPS then
+				dir = -dir
+				ni = i + dir
+			end
+			local a, b = POLICE_WPS[i], POLICE_WPS[ni]
+			local dist = (b - a).Magnitude
+			chassis.CFrame = CFrame.lookAt(a, Vector3.new(b.X, a.Y, b.Z))
+			shell.CFrame = chassis.CFrame * CFrame.new(0, 1.6, 0)
+			barR.CFrame = chassis.CFrame * CFrame.new(-1, 3.2, 0)
+			barB.CFrame = chassis.CFrame * CFrame.new(1, 3.2, 0)
+			local dest = CFrame.lookAt(b,
+				Vector3.new(b.X, b.Y, b.Z + (b.Z - a.Z)))
+			local t = TweenService:Create(chassis,
+				TweenInfo.new(dist / SPEED, Enum.EasingStyle.Linear),
+				{ CFrame = dest })
+			t:Play()
+			t.Completed:Wait()
+			shell.CFrame = dest * CFrame.new(0, 1.6, 0)
+			barR.CFrame = dest * CFrame.new(-1, 3.2, 0)
+			barB.CFrame = dest * CFrame.new(1, 3.2, 0)
+			i = ni
+		end
+	end)
+
+	-- enforcement: speeding near patrol & running the red light
+	local fines = {} -- player -> os.clock() of last fine
+	local function tilang(player, amount, reason)
+		local now = os.clock()
+		if fines[player] and now - fines[player] < 20 then return end
+		fines[player] = now
+		local ls = player:FindFirstChild("leaderstats")
+		local cash = ls and ls:FindFirstChild("Cash")
+		if cash then
+			cash.Value = math.max(0, cash.Value - amount)
+		end
+		local gui = Instance.new("BillboardGui")
+		gui.Size = UDim2.new(0, 320, 0, 70)
+		gui.StudsOffset = Vector3.new(0, 5.4, 0)
+		gui.AlwaysOnTop = true
+		gui.Parent = shell
+		local l = Instance.new("TextLabel")
+		l.Size = UDim2.new(1, 0, 1, 0)
+		l.BackgroundColor3 = Color3.fromRGB(120, 20, 20)
+		l.BackgroundTransparency = 0.2
+		l.TextColor3 = Color3.new(1, 1, 1)
+		l.TextScaled = true
+		l.Font = Enum.Font.GothamBold
+		l.Text = "TILANG! " .. reason .. " — denda $" .. amount
+		l.Parent = gui
+		task.delay(4, function()
+			gui:Destroy()
+		end)
+	end
+
+	task.spawn(function()
+		while true do
+			task.wait(0.4)
+			for _, p in ipairs(workspace:GetDescendants()) do
+				if p:IsA("VehicleSeat") and p.Occupant then
+					local player = Players:GetPlayerFromCharacter(
+						p.Occupant.Parent)
+					local hrp = p.Occupant.Parent
+						and p.Occupant.Parent:FindFirstChild(
+							"HumanoidRootPart")
+					if player and hrp
+						and (chassis.Position - hrp.Position).Magnitude
+							< 90 then
+						local speed = hrp.AssemblyLinearVelocity.Magnitude
+						if speed > 42 then
+							tilang(player, 150, "Ngebut")
+						end
+						local lightDist = (hrp.Position
+							- Vector3.new(-164.5, 5, 76.5)).Magnitude
+						if lightDist < 55 and trafficStates[1] == "R"
+							and speed > 6 then
+							tilang(player, 200, "Lampu merah")
+						end
+					end
+				end
+			end
+		end
+	end)
+end)
 
 -- ================= gates: swing open on approach, close after =================
 local gates = {}
