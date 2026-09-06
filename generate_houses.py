@@ -928,8 +928,17 @@ H("Shared", part("ShaftWallE", (1, 24, 34), (79.5, 12, -4), (120, 120, 126),
                  CONCRETE))
 H("Shared", part("ShaftWallS", (10, 24, 1), (75, 12, 12.5), (120, 120, 126),
                  CONCRETE))
-f_stairs("Shared", 75, 2, -12, steps=22, rise=1.0, run_=1.0, w=6, dirz=1,
+f_stairs("Shared", 75, 2, -8.5, steps=22, rise=1.0, run_=1.0, w=6, dirz=1,
          color=(150, 150, 156))
+# entrance marking at the platform edge
+H("Shared", part("MetroEntranceLine", (12, 0.2, 0.6), (75, 24.15, 22.4),
+                 (240, 200, 40), PLASTIC, cancollide=False))
+H("Shared", part("MetroEntranceSign", (8, 2.2, 0.4), (75, 27.2, 21.5),
+                 (30, 30, 34), SMOOTH))
+for i, ch in enumerate("STASIUN"):
+    H("Shared", part("MetroEntranceC", (0.9, 1.5, 0.2),
+                     (75 - 3.15 + i * 0.9, 27.2, 21.7), (255, 200, 40),
+                     NEON, cancollide=False))
 # station elevator: glass shaft x 88..94, stops at station floor & platform
 for px in (88, 94):
     H("Shared", part("LiftShaftWall", (0.4, 40, 6), (px, 22, 4), GLASSC,
