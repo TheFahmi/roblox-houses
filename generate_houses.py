@@ -1693,7 +1693,7 @@ SIGNS = [
     (-20, 43, "crossing", 180), (40, 43, "speed", 180),
     (110, 43, "crossing", 180),
     (33, 47, "stop", 180), (89, 47, "stop", 180),
-    (33, 100, "parking", 0), (89, 100, "parking", 0),
+    (18, 38, "parking", 0), (74, 38, "parking", 0),
     (61, -30, "noentry", 180), (61, 500, "noentry", 0),
 ]
 for sx_, sz_, kind_, rot_ in SIGNS:
