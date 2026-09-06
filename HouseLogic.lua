@@ -2254,8 +2254,7 @@ pcall(function()
 								metroInfo.etaAt - os.clock())))
 					else
 						txt = string.format(
-							"STASIUN %s
-Kereta sedang di: %s",
+							"STASIUN %s\nKereta sedang di: %s",
 							stop[1], STOPS[metroInfo.at][1])
 					end
 					if l.Text ~= txt then
