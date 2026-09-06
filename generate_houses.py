@@ -774,6 +774,38 @@ for i in range(3):
     H(h if False else "Shared", part("TrainStripe", (20, 1, 0.5),
                      (5 + i * 21, 4.2, 18 + (4.1 if i % 2 == 0 else -4.1)),
                      (220, 60, 60), PLASTIC, cancollide=False))
+    # interior: floor, seats along walls, hand poles, ceiling lights, doors
+    H("Shared", part("TrainFloorIn", (19, 0.4, 7), (5 + i * 21, 4.6, 18),
+                     (90, 90, 96), SMOOTH))
+    for sgn in (-1, 1):
+        for row in range(4):
+            H("Shared", part("TrainSeat", (3.4, 0.4, 1.4),
+                             (5 + i * 21 - 6 + row * 4, 5.3,
+                              18 + sgn * 2.6), (60, 90, 160), FABRIC,
+                             cancollide=False))
+            H("Shared", part("TrainSeatBack", (3.4, 1.6, 0.3),
+                             (5 + i * 21 - 6 + row * 4, 6.3,
+                              18 + sgn * 3.3), (60, 90, 160), FABRIC,
+                             cancollide=False))
+        for px in (-8, -2.6, 2.6, 8):
+            H("Shared", part("TrainPole", (0.25, 2.6, 0.25),
+                             (5 + i * 21 + px, 7.2, 18 + sgn * 3.2),
+                             (200, 200, 210), METAL, cancollide=False))
+    H("Shared", part("TrainCeil", (19, 0.3, 7), (5 + i * 21, 9, 18), (230,
+                     230, 236), SMOOTH))
+    for lx in (-6, 0, 6):
+        H("Shared", part("TrainLamp", (3, 0.2, 1), (5 + i * 21 + lx, 8.8,
+                         18), (255, 245, 220), NEON, cancollide=False))
+    for dx in (-9.6, 9.6):
+        H("Shared", part("TrainDoor", (0.4, 4.4, 1.8), (5 + i * 21 + dx,
+                         6.8, 18), (70, 70, 76), SMOOTH))
+    if i == 0:
+        H("Shared", part("TrainCabWall", (0.4, 6, 7.6), (-4.4, 6.4, 18),
+                         (70, 70, 76), SMOOTH))
+        H("Shared", part("TrainConsole", (2.4, 1.6, 3), (-5.6, 6, 18),
+                         (40, 40, 46), METAL))
+        H("Shared", part("TrainConsoleScreen", (0.3, 1, 2.2), (-6.8, 6.4,
+                         18), (60, 200, 120), NEON, cancollide=False))
 for pz in (-20, 20):
     H("Shared", part("StationPillar", (3, 18, 3), (-12, 11, pz), (110, 110,
                      116), CONCRETE))
@@ -782,6 +814,58 @@ for pz in (-20, 20):
 for px in (-38, 0, 38):
     H("Shared", part("StationNeon", (50, 0.4, 1.4), (px, 19.4, 0), (255,
                      245, 220), NEON, cancollide=False))
+# station interior: benches, kiosk, vending machines, clock, trash cans,
+# route map, turnstiles, waiting area
+for bx in (-34, -26, -14):
+    H("Shared", part("StationBench", (6, 0.4, 1.8), (bx, 4.2, 8), (110, 52,
+                     38), WOOD))
+    for lx in (-2.4, 2.4):
+        H("Shared", part("StationBenchLeg", (0.4, 1.8, 1.6), (bx + lx,
+                         3.1, 8), (40, 40, 44), METAL, cancollide=False))
+    H("Shared", part("StationBenchBack", (6, 1.6, 0.3), (bx, 5.4, 8.8),
+                     (110, 52, 38), WOOD, cancollide=False))
+H("Shared", part("StationKiosk", (5, 5, 4), (40, 4.5, -20), (90, 140, 90),
+                 PLASTIC))
+H(h if False else "Shared", part("StationKioskTop", (5.6, 0.4, 4.6),
+                 (40, 7.2, -20), (110, 52, 38), WOOD))
+H("Shared", part("StationKioskSign", (3.4, 1.4, 0.2), (40, 8.2, -20),
+                 (255, 200, 40), NEON, cancollide=False))
+for vx in (-38, -34):
+    H("Shared", part("StationVending", (2.4, 6.5, 2), (vx, 5.25, -24),
+                     (200, 40, 40) if vx == -38 else (40, 90, 200), SMOOTH))
+    H(h if False else "Shared", part("StationVendGlass", (1.8, 4, 0.15),
+                     (vx, 5.6, -25.1), (200, 225, 240), GLASS,
+                     transparency=0.5, cancollide=False))
+H("Shared", part("StationClock", (0.3, 4, 4), (-25, 17, 0), (240, 240, 245),
+                 SMOOTH, cancollide=False))
+H("Shared", part("StationClockFace", (0.2, 3.2, 3.2), (-25.3, 17, 0),
+                 (255, 255, 255), PLASTIC, cancollide=False))
+H("Shared", part("StationClockHand", (0.15, 0.3, 1.4), (-25.5, 17, 0),
+                 (30, 30, 34), SMOOTH, cancollide=False))
+for tx2 in (-36, 30):
+    H("Shared", part("StationTrash", (1.4, 2.6, 1.4), (tx2, 3.3, 8), (60,
+                     110, 70), SMOOTH))
+H("Shared", part("StationMap", (0.3, 5, 9), (-45.6, 12, 0), (40, 90, 200),
+                 PLASTIC, cancollide=False))
+H("Shared", part("StationMapLine", (0.2, 0.4, 7), (-45.4, 12.6, 0), (240,
+                 240, 240), PLASTIC, cancollide=False))
+for stn in (-40, -30, -20, -10, 0, 10, 20):
+    H("Shared", part("StationMapDot", (0.25, 1, 1), (-45.35, 12.6, stn),
+                     (255, 200, 40), NEON, cancollide=False))
+# turnstiles between platform and concourse
+for tx3 in (-32, -28, -24, -20):
+    H("Shared", part("TurnstileBody", (0.6, 3.4, 2.4), (tx3, 4.7, -2),
+                     (90, 90, 96), METAL))
+    H("Shared", part("TurnstileArm", (0.3, 0.3, 2), (tx3, 3.4, -3.4),
+                     (220, 200, 40), METAL, cancollide=False))
+# waiting-area chairs near the lift
+for cx2 in (86, 89, 92):
+    H("Shared", part("StationChair", (2.2, 0.35, 2), (cx2, 4.2, -20),
+                     (50, 90, 160), PLASTIC))
+    H("Shared", part("StationChairLeg", (0.3, 1.8, 1.6), (cx2, 3.1, -20),
+                     (40, 40, 44), METAL, cancollide=False))
+    H("Shared", part("StationChairBack", (2.2, 1.4, 0.25), (cx2, 5.2, -21),
+                     (50, 90, 160), PLASTIC, cancollide=False))
 H("Shared", part("StationSignBoard", (24, 3, 0.4), (0, 14, -25.4), (30, 30,
                  34), SMOOTH))
 for i, ch in enumerate("STASIUN"):
