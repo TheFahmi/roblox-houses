@@ -623,7 +623,6 @@ do
 			local hinge = Instance.new("HingeConstraint")
 			hinge.Attachment0 = att0
 			hinge.Attachment1 = att1
-			hinge.AxesEnabled = false
 			hinge.Parent = wheel
 			return hinge
 		end
@@ -694,7 +693,7 @@ do
 
 	for _, folder in ipairs(workspace:GetChildren()) do
 		if folder:IsA("Folder") and folder:FindFirstChild("CarBody", true) then
-			buildCar(folder)
+			pcall(buildCar, folder)
 		end
 	end
 end
