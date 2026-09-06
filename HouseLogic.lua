@@ -2018,6 +2018,83 @@ pcall(function()
 	end)
 end)
 
+-- ================= metro: moving train between 4 stations ================
+pcall(function()
+	-- collect the parked train parts
+	local trainParts = {}
+	for _, p in ipairs(workspace:GetDescendants()) do
+		if p:IsA("BasePart") and p.Name:match("^Train") then
+			table.insert(trainParts, p)
+		end
+	end
+
+	-- stop X positions (world): first TrainCar center aligns to st_x + 40
+	local STOPS = {
+		{ "Selatan", -323.75 },
+		{ "Plaza", -26.25 },
+		{ "Timur", 253.75 },
+		{ "Utara", 551.25 },
+	}
+
+	local function trainX()
+		for _, p in ipairs(trainParts) do
+			if p.Name == "TrainCar" then
+				return p.CFrame.X
+			end
+		end
+	end
+
+	local moving = false
+	local function goToStop(idx)
+		if moving then return end
+		moving = true
+		local delta = Vector3.new(STOPS[idx][2] - trainX(), 0, 0)
+		local dur = math.abs(delta.X) / 34
+		for _, p in ipairs(trainParts) do
+			TweenService:Create(p, TweenInfo.new(dur,
+				Enum.EasingStyle.Linear),
+				{ CFrame = p.CFrame + delta }):Play()
+		end
+		task.delay(dur + 0.1, function()
+			moving = false
+		end)
+	end
+
+	-- call buttons on every station platform wall
+	for si, stop in ipairs(STOPS) do
+		local btn = Instance.new("Part")
+		btn.Name = "MetroCall" .. si
+		btn.Size = Vector3.new(1.4, 1.4, 0.5)
+		btn.Color = Color3.fromRGB(255, 200, 40)
+		btn.Material = Enum.Material.Neon
+		btn.Anchored = true
+		btn.CFrame = CFrame.new(stop[2] - 17.5, 6.5, -8.5)
+		btn.Parent = workspace
+		local click = Instance.new("ClickDetector")
+		click.MaxActivationDistance = 30
+		click.Parent = btn
+		click.MouseClick:Connect(function()
+			goToStop(si)
+		end)
+	end
+
+	-- shuttle: dwell 5s at each station, then run to the next
+	task.spawn(function()
+		local i, dir = 1, 1
+		while true do
+			task.wait(5)
+			local nxt = i + dir
+			if nxt < 1 or nxt > #STOPS then
+				dir = -dir
+				nxt = i + dir
+			end
+			goToStop(nxt)
+			task.wait(3)
+			i = nxt
+		end
+	end)
+end)
+
 -- ================= gates: swing open on approach, close after =================
 local gates = {}
 for _, p in ipairs(workspace:GetDescendants()) do
