@@ -1603,31 +1603,32 @@ def build_Penthouse(cx, cz, FY, hname):
     f_painting(h, cx - 14.6, FY + 17, cz, roty=90, w=5, hgt=3.5,
                color=(90, 40, 90))
 
-    # ---- F3: rooftop lounge (open sky) ----
-    H(h, part("PoolDeck", (16, 0.4, 9), (cx - 8, FY + 24.4, cz + 6), MARBLEC,
+    # ---- F3: rooftop lounge (open sky) — kept clear of the shaft hole ----
+    H(h, part("PoolDeck", (14, 0.4, 9), (cx - 8, FY + 24.4, cz - 6), MARBLEC,
               MARBLE))
-    H(h, part("PoolBasin", (12, 1.2, 6.5), (cx - 8, FY + 24.6, cz + 6),
+    H(h, part("PoolBasin", (11, 1.2, 6), (cx - 8, FY + 24.6, cz - 6),
               (200, 205, 210), PLASTIC))
-    H(h, part("PoolWater", (11.4, 1, 5.9), (cx - 8, FY + 24.75, cz + 6),
+    H(h, part("PoolWater", (10.4, 1, 5.4), (cx - 8, FY + 24.75, cz - 6),
               POOL_WATER, GLASS, transparency=0.3))
-    H(h, part("Helipad", (0.3, 16, 16), (cx + 8, FY + 24.6, cz + 6), (70, 70,
-              74), CONCRETE, shape=CYL, rotz=90))
-    for hd, hl in ((0, 6), (-1.6, 3), (1.6, 3)):
-        H(h, part("HelipadH", (hl if hl < 5 else 1.2, 0.15,
-                  1.2 if hl < 5 else 6), (cx + 8 + hd, FY + 24.85, cz + 6),
+    H(h, part("Helipad", (0.3, 12, 12), (cx + 9, FY + 24.6, cz - 5.5), (70,
+              70, 74), CONCRETE, shape=CYL, rotz=90))
+    for hd, hl in ((0, 5), (-1.3, 2.5), (1.3, 2.5)):
+        H(h, part("HelipadH", (hl if hl < 4 else 1, 0.15,
+                  1 if hl < 4 else 5), (cx + 9 + hd, FY + 24.85, cz - 5.5),
                   WHITE, SMOOTH, cancollide=False))
-    H(h, part("BarCounter", (9, 3, 1.5), (cx, FY + 25.5, cz + 10.5), DARKWOOD,
-              WOOD))
-    H(h, part("BarTop", (9.6, 0.3, 2), (cx, FY + 27.1, cz + 10.5), GOLD, FOIL))
+    H(h, part("BarCounter", (9, 3, 1.5), (cx + 9.5, FY + 25.5, cz - 10),
+              DARKWOOD, WOOD))
+    H(h, part("BarTop", (9.6, 0.3, 2), (cx + 9.5, FY + 27.1, cz - 10), GOLD,
+              FOIL))
     for bx in (-3, 0, 3):
-        H(h, part("BarStool", (0.9, 2.4, 0.9), (cx + bx, FY + 26.2,
-                  cz + 8.7), (110, 52, 38), PLASTIC, shape=CYL, rotz=90))
-    f_sofa(h, cx - 1, FY + 24.5, cz - 6.5, (150, 120, 60), w=6)
-    f_coffee_table(h, cx - 1, FY + 24.5, cz - 8.7, w=3.5, mat=FOIL,
+        H(h, part("BarStool", (0.9, 2.4, 0.9), (cx + 9.5 + bx, FY + 26.2,
+                  cz - 8.2), (110, 52, 38), PLASTIC, shape=CYL, rotz=90))
+    f_sofa(h, cx - 1, FY + 24.5, cz + 1, (150, 120, 60), w=6)
+    f_coffee_table(h, cx - 1, FY + 24.5, cz - 1.2, w=3.5, mat=FOIL,
                    color=GOLD)
-    H(h, part("FireRing", (3.4, 0.6, 3.4), (cx + 7, FY + 24.9, cz - 7),
+    H(h, part("FireRing", (3.4, 0.6, 3.4), (cx + 2, FY + 24.9, cz - 10.5),
               (70, 70, 74), SLATE, shape=CYL, rotz=90))
-    H(h, part("Fire", (1.6, 1, 1.6), (cx + 7, FY + 25.6, cz - 7), FLAME,
+    H(h, part("Fire", (1.6, 1, 1.6), (cx + 2, FY + 25.6, cz - 10.5), FLAME,
               NEON, shape=BALL, cancollide=False))
 
     # owner sign (physical, like sale signs but static)
