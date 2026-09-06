@@ -822,8 +822,9 @@ for st_name, st_x in METRO_STATIONS:
 for ti in range(len(METRO_STATIONS) - 1):
     a_x = METRO_STATIONS[ti][1] + 47
     b_x = METRO_STATIONS[ti + 1][1] - 47
-    tlen = b_x - a_x
-    tcx = (a_x + b_x) / 2
+    tlen = (b_x - a_x) + 8
+    a_x -= 4
+    tcx = a_x + tlen / 2
     H("Shared", part(f"MetroTunnelFloor{ti}", (tlen, 2, 20), (tcx, 1, 0),
                      (55, 55, 60), CONCRETE))
     H("Shared", part(f"MetroTunnelCeil{ti}", (tlen, 2, 20), (tcx, 21, 0),
@@ -834,6 +835,10 @@ for ti in range(len(METRO_STATIONS) - 1):
                      (60, 60, 66), CONCRETE))
     H("Shared", part(f"MetroTunnelTrack{ti}", (tlen, 0.6, 7), (tcx, 2.3, 0),
                      (50, 50, 54), SLATE))
+H("Shared", part("MetroEndCapW", (2, 40, 99), (-381, 20, 0), (80, 80, 86),
+                 CONCRETE))
+H("Shared", part("MetroEndCapE", (2, 40, 99), (661, 20, 0), (80, 80, 86),
+                 CONCRETE))
 
 # parked train (managed by HouseLogic): 3 cars, middle = "TrainCarMid"
 # stops align the MIDDLE car with each station platform (center = st_x-25)
