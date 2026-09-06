@@ -1579,6 +1579,7 @@ pcall(function()
 				end)
 			end
 		end
+		end
 	end
 
 	-- ---------- NPC dialogs ----------
