@@ -604,6 +604,55 @@ def f_fence(h, x, z, length, roty=0, y=0, color=OFFWHITE, gap=None):
         seg(0, length)
 
 
+def f_roadsign(h, x, z, kind, roty=0, y=0):
+    """Traffic sign: dark post + colored sign board with simple markings.
+    kind: 'stop' | 'yield' | 'noentry' | 'parking' | 'speed' | 'crossing'
+    Board faces -Z at roty=0 (read from the front)."""
+    H(h, part("SignPost", (0.35, 7, 0.35), (x, y + 3.5, z), (40, 40, 44),
+              METAL))
+    if kind == "stop":
+        H(h, part("SignBoard", (3.6, 3.6, 0.25), (x, y + 6.4, z), (170, 30,
+                  30), PLASTIC, shape=CYL, rotz=90))
+        H(h, part("SignMark", (2.2, 0.5, 0.3), (x, y + 6.4, z - 0.16),
+                  (240, 240, 240), PLASTIC, cancollide=False))
+    elif kind == "yield":
+        for i, (wy, ww) in enumerate(((7.0, 2.4), (6.2, 1.6), (5.4, 0.8))):
+            H(h, part("SignMark", (ww, 0.4, 0.3), (x, y + wy, z - 0.16),
+                      (240, 240, 240), PLASTIC, cancollide=False))
+        H(h, part("SignBoard", (3.6, 3.6, 0.22), (x, y + 6.2, z), (240, 240,
+                  240), PLASTIC, shape=CYL, rotz=90))
+    elif kind == "noentry":
+        H(h, part("SignBoard", (3.6, 3.6, 0.25), (x, y + 6.4, z), (240, 240,
+                  240), PLASTIC, shape=CYL, rotz=90))
+        H(h, part("SignMark", (2.6, 2.6, 0.3), (x, y + 6.4, z - 0.16), (200,
+                  40, 40), PLASTIC, shape=CYL, rotz=90, cancollide=False))
+        H(h, part("SignBar", (2.6, 0.55, 0.3), (x, y + 6.4, z - 0.2),
+                  (240, 240, 240), PLASTIC, cancollide=False))
+    elif kind == "parking":
+        H(h, part("SignBoard", (3.4, 4.4, 0.25), (x, y + 6.4, z), (40, 90,
+                  200), PLASTIC))
+        H(h, part("SignMark", (2.4, 0.5, 0.3), (x, y + 7.2, z - 0.16),
+                  (240, 240, 240), PLASTIC, cancollide=False))
+        H(h, part("SignMark", (0.5, 2.2, 0.3), (x, y + 6.2, z - 0.16),
+                  (240, 240, 240), PLASTIC, cancollide=False))
+    elif kind == "speed":
+        H(h, part("SignBoard", (3.6, 3.6, 0.25), (x, y + 6.4, z), (240, 240,
+                  240), PLASTIC, shape=CYL, rotz=90))
+        H(h, part("SignRing", (2.6, 2.6, 0.3), (x, y + 6.4, z - 0.16), (200,
+                  40, 40), PLASTIC, shape=CYL, rotz=90, cancollide=False))
+        H(h, part("SignMark", (1.4, 1.4, 0.3), (x, y + 6.4, z - 0.18), (30,
+                  30, 34), PLASTIC, cancollide=False))
+    elif kind == "crossing":
+        H(h, part("SignBoard", (4.2, 3.4, 0.25), (x, y + 6.4, z), (240, 200,
+                  40), PLASTIC))
+        for i in range(3):
+            H(h, part("SignMark", (0.5, 2, 0.3), (x - 0.7 + i * 0.7,
+                      y + 6.2, z - 0.16), (30, 30, 34), PLASTIC,
+                      cancollide=False))
+    H(h, part("SignCap", (0.6, 0.3, 0.6), (x, y + 8.2, z), (40, 40, 44),
+              METAL, cancollide=False))
+
+
 def f_carport_car(h, x, y, z, roty=0, color=CAR_RED):
     ca, sa = math.cos(math.radians(roty)), math.sin(math.radians(roty))
 
@@ -1632,6 +1681,24 @@ ROW_ZS = [60 + 56 * i for i in range(8)]
 for i in range(52):
     H("Shared", part(f"RoadNS{i}", (9, 0.2, 9), (-94, 0.09, 20 + i * 9),
                      *ROAD))
+# traffic signs along the road network
+# stop: plaza exits & complex entries; yield: lane merges; noentry: hill
+# one-ways; parking: near carports; speed: long straights; crossing: plaza
+SIGNS = [
+    (-91, 34, "stop", 0), (-97, 16, "crossing", 0), (-88, 60, "speed", 0),
+    (-88, 116, "speed", 0), (-100, 30, "noentry", 90),
+    (-82, 148, "yield", 0), (-82, 204, "parking", 0),
+    (-88, 260, "speed", 0), (-82, 316, "yield", 0),
+    (-88, 372, "stop", 0), (-82, 428, "parking", 0),
+    (-20, 43, "crossing", 180), (40, 43, "speed", 180),
+    (110, 43, "crossing", 180),
+    (33, 47, "stop", 180), (89, 47, "stop", 180),
+    (33, 100, "parking", 0), (89, 100, "parking", 0),
+    (61, -30, "noentry", 180), (61, 500, "noentry", 0),
+]
+for sx_, sz_, kind_, rot_ in SIGNS:
+    f_roadsign("Shared", sx_, sz_, kind_, roty=rot_, y=0.3)
+
 # one long lane in front of each complex (row_z - 28: clear of lots/fences,
 # touching the spine at its west end)
 for rz in ROW_ZS:
