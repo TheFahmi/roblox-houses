@@ -387,7 +387,7 @@ local function makePart(name, size, pos, color)
 	return part
 end
 
-local DEPOT_POS = Vector3.new(0, 3.5, 35) -- plaza, near spawn
+local DEPOT_POS = Vector3.new(0, 45.5, 35) -- plaza, near spawn
 makePart("CourierDepot", Vector3.new(6, 7, 6), DEPOT_POS,
 	Color3.fromRGB(110, 52, 38))
 
@@ -612,6 +612,34 @@ do
 			* CFrame.Angles(math.rad(-18), 0, 0)
 		ws.CanCollide = false
 		ws.Parent = car
+		local hood = Instance.new("WedgePart")
+		hood.Name = "Hood"
+		hood.Size = Vector3.new(7.4, 1.8, 4.8)
+		hood.Color = color
+		hood.Material = Enum.Material.SmoothPlastic
+		hood.CFrame = chassis.CFrame * CFrame.new(0, 1.9, -4.4)
+		hood.Anchored = true
+		hood.CanCollide = false
+		hood.Parent = car
+		local roof = Instance.new("Part")
+		roof.Name = "Roof"
+		roof.Size = Vector3.new(6.6, 0.5, 6.2)
+		roof.Color = color
+		roof.Material = Enum.Material.SmoothPlastic
+		roof.CFrame = chassis.CFrame * CFrame.new(0, 3.6, 1.4)
+		roof.Anchored = true
+		roof.CanCollide = false
+		roof.Parent = car
+		local trunk = Instance.new("WedgePart")
+		trunk.Name = "Trunk"
+		trunk.Size = Vector3.new(7.4, 1.2, 2.6)
+		trunk.Color = color
+		trunk.Material = Enum.Material.SmoothPlastic
+		trunk.CFrame = chassis.CFrame * CFrame.new(0, 1.5, 6.4)
+			* CFrame.Angles(0, math.pi, 0)
+		trunk.Anchored = true
+		trunk.CanCollide = false
+		trunk.Parent = car
 
 		-- wheels on hinge-motors (front steer, rear drive)
 		local wheelM, wheelZ = Instance.new("Model", car), {}
@@ -747,6 +775,44 @@ do
 		seat.Anchored = true
 		seat.CFrame = ch.CFrame * CFrame.new(0, 1.45, 1.5)
 		seat.Parent = m
+		-- sloped hood (front), roof, trunk wedge — real car silhouette
+		local hood = Instance.new("WedgePart")
+		hood.Size = Vector3.new(7.4, 1.8, 4.8)
+		hood.Color = color
+		hood.Material = Enum.Material.SmoothPlastic
+		hood.Anchored = true
+		hood.CanCollide = false
+		hood.CFrame = ch.CFrame * CFrame.new(0, 1.9, -4.4)
+		hood.Parent = m
+		local roof = Instance.new("Part")
+		roof.Name = "Roof"
+		roof.Size = Vector3.new(6.6, 0.5, 6.2)
+		roof.Color = color
+		roof.Material = Enum.Material.SmoothPlastic
+		roof.Anchored = true
+		roof.CanCollide = false
+		roof.CFrame = ch.CFrame * CFrame.new(0, 3.6, 1.4)
+		roof.Parent = m
+		local windshield = Instance.new("Part")
+		windshield.Name = "Windscreen"
+		windshield.Size = Vector3.new(6.6, 2, 0.3)
+		windshield.Color = Color3.fromRGB(200, 225, 240)
+		windshield.Material = Enum.Material.Glass
+		windshield.Transparency = 0.45
+		windshield.Anchored = true
+		windshield.CanCollide = false
+		windshield.CFrame = ch.CFrame * CFrame.new(0, 2.9, -1.8)
+			* CFrame.Angles(math.rad(-22), 0, 0)
+		windshield.Parent = m
+		local trunk = Instance.new("WedgePart")
+		trunk.Size = Vector3.new(7.4, 1.2, 2.6)
+		trunk.Color = color
+		trunk.Material = Enum.Material.SmoothPlastic
+		trunk.Anchored = true
+		trunk.CanCollide = false
+		trunk.CFrame = ch.CFrame * CFrame.new(0, 1.5, 6.4)
+			* CFrame.Angles(0, math.pi, 0)
+		trunk.Parent = m
 		local wheels = {}
 		for _, wx in ipairs({ -3.9, 3.9 }) do
 			for _, wz in ipairs({ -4.8, 4.8 }) do
@@ -793,6 +859,8 @@ do
 	end
 end
 
+local WORLD_LIFT_Y = 42 -- platform level (level 3)
+
 -- ================= Penthouse elevator (F1 lobby / F2 suite / F3 roof) =====
 pcall(function()
 	local folder = workspace:FindFirstChild("Penthouse")
@@ -823,7 +891,7 @@ pcall(function()
 		moving = true
 		pulse()
 		local target = Vector3.new(BASE_X,
-			(FLOORS[idx] + 0.25) * SCALE, BASE_Z)
+			(FLOORS[idx] + 0.25) * SCALE + WORLD_LIFT_Y, BASE_Z)
 		local dist = math.abs(target.Y - cab.Position.Y)
 		TweenService:Create(cab, TweenInfo.new(dist / 12,
 			Enum.EasingStyle.Sine, Enum.EasingDirection.InOut),
@@ -845,7 +913,7 @@ pcall(function()
 		btn.Material = Enum.Material.Neon
 		btn.Anchored = true
 		btn.CFrame = CFrame.new(BASE_X + 2.85 * 1.75,
-			(fy + 2.2) * SCALE, BASE_Z - 3.5 * 1.75 - 0.8)
+			(fy + 2.2) * SCALE + WORLD_LIFT_Y, BASE_Z - 3.5 * 1.75 - 0.8)
 		btn.Parent = folderPar
 		local click = Instance.new("ClickDetector")
 		click.MaxActivationDistance = 25
@@ -916,12 +984,12 @@ end
 pcall(function()
 	-- build the patrol car (anchored, rides a fixed waypoint loop)
 	local POLICE_WPS = {
-		Vector3.new(0, 1.2, 76.5),
-		Vector3.new(-164.5, 1.2, 76.5),
-		Vector3.new(-164.5, 1.2, 1298.5),
-		Vector3.new(393, 1.2, 1298.5),
-		Vector3.new(-164.5, 1.2, 1298.5),
-		Vector3.new(-164.5, 1.2, 76.5),
+		Vector3.new(0, 43.2, 76.5),
+		Vector3.new(-164.5, 43.2, 76.5),
+		Vector3.new(-164.5, 43.2, 1298.5),
+		Vector3.new(393, 43.2, 1298.5),
+		Vector3.new(-164.5, 43.2, 1298.5),
+		Vector3.new(-164.5, 43.2, 76.5),
 	}
 	local car = Instance.new("Model")
 	car.Name = "PoliceCar"
@@ -936,12 +1004,39 @@ pcall(function()
 	local shell = Instance.new("Part")
 	shell.Name = "Shell"
 	shell.Size = Vector3.new(7.5, 2.2, 14)
-	shell.Color = Color3.fromRGB(25, 25, 28)
+	shell.Color = Color3.fromRGB(240, 240, 245)
 	shell.Material = Enum.Material.SmoothPlastic
 	shell.Anchored = true
 	shell.CanCollide = false
 	shell.CFrame = chassis.CFrame * CFrame.new(0, 1.6, 0)
 	shell.Parent = car
+	local stripe = Instance.new("Part")
+	stripe.Name = "Stripe"
+	stripe.Size = Vector3.new(7.6, 1.4, 8)
+	stripe.Color = Color3.fromRGB(25, 25, 28)
+	stripe.Material = Enum.Material.SmoothPlastic
+	stripe.Anchored = true
+	stripe.CanCollide = false
+	stripe.CFrame = chassis.CFrame * CFrame.new(0, 1.6, 2)
+	stripe.Parent = car
+	local hood = Instance.new("WedgePart")
+	hood.Name = "Hood"
+	hood.Size = Vector3.new(7.4, 1.8, 4.8)
+	hood.Color = Color3.fromRGB(240, 240, 245)
+	hood.Material = Enum.Material.SmoothPlastic
+	hood.Anchored = true
+	hood.CanCollide = false
+	hood.CFrame = chassis.CFrame * CFrame.new(0, 1.9, -4.4)
+	hood.Parent = car
+	local roof = Instance.new("Part")
+	roof.Name = "Roof"
+	roof.Size = Vector3.new(6.6, 0.5, 6.2)
+	roof.Color = Color3.fromRGB(240, 240, 245)
+	roof.Material = Enum.Material.SmoothPlastic
+	roof.Anchored = true
+	roof.CanCollide = false
+	roof.CFrame = chassis.CFrame * CFrame.new(0, 3.6, 1.4)
+	roof.Parent = car
 	local barR = Instance.new("Part")
 	barR.Name = "PoliceBarR"
 	barR.Size = Vector3.new(1.4, 0.8, 2.6)
@@ -1002,6 +1097,9 @@ pcall(function()
 			local dist = (b - a).Magnitude
 			chassis.CFrame = CFrame.lookAt(a, Vector3.new(b.X, a.Y, b.Z))
 			shell.CFrame = chassis.CFrame * CFrame.new(0, 1.6, 0)
+			stripe.CFrame = chassis.CFrame * CFrame.new(0, 1.6, 2)
+			hood.CFrame = chassis.CFrame * CFrame.new(0, 1.9, -4.4)
+			roof.CFrame = chassis.CFrame * CFrame.new(0, 3.6, 1.4)
 			barR.CFrame = chassis.CFrame * CFrame.new(-1, 3.2, 0)
 			barB.CFrame = chassis.CFrame * CFrame.new(1, 3.2, 0)
 			local dest = CFrame.lookAt(b,
@@ -1012,6 +1110,9 @@ pcall(function()
 			t:Play()
 			t.Completed:Wait()
 			shell.CFrame = dest * CFrame.new(0, 1.6, 0)
+			stripe.CFrame = dest * CFrame.new(0, 1.6, 2)
+			hood.CFrame = dest * CFrame.new(0, 1.9, -4.4)
+			roof.CFrame = dest * CFrame.new(0, 3.6, 1.4)
 			barR.CFrame = dest * CFrame.new(-1, 3.2, 0)
 			barB.CFrame = dest * CFrame.new(1, 3.2, 0)
 			i = ni
@@ -1070,7 +1171,7 @@ pcall(function()
 							tilang(player, 150, "Ngebut")
 						end
 						local lightDist = (hrp.Position
-							- Vector3.new(-164.5, 5, 76.5)).Magnitude
+							- Vector3.new(-164.5, 47, 76.5)).Magnitude
 						if lightDist < 55 and trafficStates[1] == "R"
 							and speed > 6 then
 							tilang(player, 200, "Lampu merah")
@@ -1274,10 +1375,10 @@ pcall(function()
 		local bus = Instance.new("Model")
 		bus.Name = "CityBus"
 		local ch = Instance.new("Part")
-		ch.Size = Vector3.new(9, 1.2, 30)
+		ch.Size = Vector3.new(9, 43.2, 30)
 		ch.Color = Color3.fromRGB(70, 130, 200)
 		ch.Anchored = true
-		ch.CFrame = CFrame.new(30, 1.6, 76.5)
+		ch.CFrame = CFrame.new(30, 43.6, 76.5)
 		ch.Parent = bus
 		local sh = Instance.new("Part")
 		sh.Size = Vector3.new(9, 4, 30)

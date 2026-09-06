@@ -89,13 +89,17 @@ def H(house, xml):
 
 # ---------------------------------------------------------------- core part
 SCALE = 1.75  # world scale up: rooms sized for the character
+WORLD_LIFT = 24  # pre-scale studs: whole world sits on a platform at y=42
+LIFT_OFF = False  # underground structures opt out of the lift
 
 
 def part(name, size, pos, color, mat=PLASTIC, transparency=0.0,
          cancollide=True, shape=None, rotx=0.0, roty=0.0, rotz=0.0,
          cls="Part"):
     """One anchored part. Single-axis rotation only (rotx/roty/rotz degrees)."""
-    x, y, z = (v * SCALE for v in pos)
+    lift = 0 if LIFT_OFF else WORLD_LIFT
+    x, y, z = ((v + (lift if k == 1 else 0)) * SCALE
+               for k, v in enumerate(pos))
     sx, sy, sz = (v * SCALE for v in size)
     if rotx:
         c, s = math.cos(math.radians(rotx)), math.sin(math.radians(rotx))
@@ -618,10 +622,11 @@ def f_trafficlight(h, x, z, idx, roty=0, y=0):
               roty=roty))
     H(h, part("TLVisor", (2.8, 0.5, 2.2), (x, y + 11.4, z), (30, 30, 34),
               SMOOTH, roty=roty, cancollide=False))
+    lamp_colors = {"R": (255, 60, 60), "Y": (255, 200, 40),
+                   "G": (60, 200, 90)}
     for nm, ly in (("R", 11.6), ("Y", 10), ("G", 8.4)):
-        lx = x + (0.9 * -1 if True else 0)  # lamps on the front face
         H(h, part(f"TLamp_{nm}{idx}", (1.3, 1.3, 0.5),
-                  (x + 0.0, y + ly, z), (255, 60, 60), NEON,
+                  (x, y + ly, z), lamp_colors[nm], NEON,
                   roty=roty, cancollide=False))
 
 
@@ -721,7 +726,71 @@ def f_lantern(h, x, z, y=0):
 # ================================================================ SHARED
 cx0 = 0
 
-H("Shared", part("Ground", (1000, 1, 1000), (0, -0.5, 70), (106, 160, 80), GRASS))
+LIFT_OFF = True
+H("Shared", part("Ground", (1000, 1, 1000), (0, -0.5, 70), (106, 160, 80),
+                 GRASS))
+H("Shared", part("CityPlatform", (1040, 2, 1040), (0, 23, 70), (140, 140,
+                 146), CONCRETE))
+# support pillars under the platform
+for px, pz in ((150, 150), (150, 400), (400, 150), (400, 400), (-150, 150),
+               (-150, 400), (-400, 150), (-400, 400), (300, -100),
+               (-300, -100), (0, -300), (0, 300), (250, 250), (-250, 250)):
+    H("Shared", part("SupportPillar", (10, 22, 10), (px, 11, pz), (130, 130,
+                     134), CONCRETE))
+# underground metro station (ground level, below the platform)
+H("Shared", part("StationFloor", (94, 2, 54), (0, 1, 0), (60, 60, 66),
+                 CONCRETE))
+H("Shared", part("StationCeil", (94, 2, 54), (0, 21, 0), (70, 70, 76),
+                 CONCRETE))
+H("Shared", part("StationWallB", (94, 18, 2), (0, 11, 26), (80, 80, 86),
+                 CONCRETE))
+H("Shared", part("StationWallF", (94, 18, 2), (0, 11, -26), (80, 80, 86),
+                 CONCRETE))
+H("Shared", part("StationWallL", (2, 18, 54), (-46, 11, 0), (80, 80, 86),
+                 CONCRETE))
+H("Shared", part("StationWallR", (2, 18, 54), (46, 11, 0), (80, 80, 86),
+                 CONCRETE))
+H("Shared", part("StationPlatform", (26, 2, 16), (-25, 3, 0), (200, 200,
+                 206), MARBLE))
+H("Shared", part("StationSafetyLine", (26, 0.2, 1), (-25, 4.15, 7.5),
+                 (240, 200, 40), PLASTIC, cancollide=False))
+for tx in (14, 30):
+    H("Shared", part("StationTrack", (60, 0.6, 7), (tx, 2.3, 12), (50, 50,
+                     54), SLATE))
+for i in range(3):
+    H("Shared", part("TrainCar", (20, 6, 8), (5 + i * 21, 6.4, 18), (220,
+                     220, 226), SMOOTH))
+    for sgn in (-1, 1):
+        H("Shared", part("TrainWindow", (16, 1.8, 0.4), (5 + i * 21, 7.6,
+                         18 + sgn * 4.1), (140, 190, 230), GLASS,
+                         transparency=0.3, cancollide=False))
+    H(h if False else "Shared", part("TrainStripe", (20, 1, 0.5),
+                     (5 + i * 21, 4.2, 18 + (4.1 if i % 2 == 0 else -4.1)),
+                     (220, 60, 60), PLASTIC, cancollide=False))
+for pz in (-20, 20):
+    H("Shared", part("StationPillar", (3, 18, 3), (-12, 11, pz), (110, 110,
+                     116), CONCRETE))
+    H("Shared", part("StationPillar", (3, 18, 3), (30, 11, pz), (110, 110,
+                     116), CONCRETE))
+for px in (-38, 0, 38):
+    H("Shared", part("StationNeon", (50, 0.4, 1.4), (px, 19.4, 0), (255,
+                     245, 220), NEON, cancollide=False))
+H("Shared", part("StationSignBoard", (24, 3, 0.4), (0, 14, -25.4), (30, 30,
+                 34), SMOOTH))
+for i, ch in enumerate("STASIUN"):
+    H("Shared", part("StationSignC", (1.4, 2, 0.2),
+                     (-6.3 + i * 1.8, 14, -25.65), GOLD, NEON,
+                     cancollide=False))
+# stair shaft: platform (y 42) down into the station
+H("Shared", part("ShaftWallW", (1, 24, 34), (70.5, 12, -4), (120, 120, 126),
+                 CONCRETE))
+H("Shared", part("ShaftWallE", (1, 24, 34), (79.5, 12, -4), (120, 120, 126),
+                 CONCRETE))
+H("Shared", part("ShaftWallS", (10, 24, 1), (75, 12, 12.5), (120, 120, 126),
+                 CONCRETE))
+f_stairs("Shared", 75, 2, -12, steps=22, rise=1.0, run_=1.0, w=6, dirz=1,
+         color=(150, 150, 156))
+LIFT_OFF = False
 H("Shared", part("Plaza", (60, 0.3, 40), (0, 0.15, 0), MARBLEC, MARBLE))
 
 # cobble main street X-axis at z=25
@@ -757,7 +826,7 @@ spawn = (
     f'<token name="Material">{MARBLE}</token>'
     f'<Color3uint8 name="Color3uint8">{pack(*MARBLEC)}</Color3uint8>'
     f'<Vector3 name="size"><X>15</X><Y>0.4</Y><Z>15</Z></Vector3>'
-    f'<CoordinateFrame name="CFrame"><X>0</X><Y>0.4</Y><Z>21</Z>'
+    f'<CoordinateFrame name="CFrame"><X>0</X><Y>42.4</Y><Z>21</Z>'
     f'<R00>1</R00><R01>0</R01><R02>0</R02><R10>0</R10><R11>1</R11><R12>0</R12>'
     f'<R20>0</R20><R21>0</R21><R22>1</R22></CoordinateFrame>'
     f'<token name="TopSurface">0</token><token name="BottomSurface">0</token>'
