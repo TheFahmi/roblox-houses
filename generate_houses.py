@@ -1232,8 +1232,6 @@ def build_ZenHouse(cx, cz, FY, hname):
     # stilts
     for sx in (-8, -2.5, 2.5, 8):
         for sz in (-6, 0, 6):
-            if sx == 8 and sz == 0:
-                continue  # stair run passes here
             H(h, part("Stilt", (0.8, FY, 0.8), (cx + sx, FY / 2, cz + sz), DARKWOOD,
                       WOOD))
     H(h, part("Platform", (22, 0.5, 17), (cx, FY - 0.25, cz), (190, 170, 130),
@@ -1261,8 +1259,8 @@ def build_ZenHouse(cx, cz, FY, hname):
     H(h, part("WallR", (0.5, 7, 17), (cx + 11, FY + 3.75, cz), (225, 218, 200),
               PLASTIC))
     # stairs + walkway
-    f_stairs(h, cx + 15.2, 0.2, cz + 2, steps=5, rise=0.5, run_=0.95, w=4,
-             dirx=-1, color=DARKWOOD)
+    f_stairs(h, cx + 4.5, 0.2, cz - 13.9, steps=6, rise=0.38, run_=0.9,
+             w=4, dirz=1, color=DARKWOOD)
 
     # interior: low table, cushions, bonsai, bed niche
     H(h, part("LowTable", (6, 0.4, 3), (cx - 4, FY + 1.2, cz - 1), DARKWOOD, WOOD))
