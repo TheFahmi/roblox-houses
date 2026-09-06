@@ -731,22 +731,18 @@ H("Shared", part("Ground", (1000, 1, 1000), (0, -0.5, 70), (106, 160, 80),
                  GRASS))
 # CityPlatform pieces: two holes — stairs (x 71..79, z 1..13) and station
 # lift (x 88..94, z 1..7)
+# CityPlatform: strip z 1..13 with TWO holes — stairs (x 29.5..38.5) and
+# station lift (x 87.5..94.3); N/S slabs cover the rest of the world
 H("Shared", part("CityPlatformN", (1040, 2, 507), (0, 23, 266.5), (140, 140,
                  146), CONCRETE))
 H("Shared", part("CityPlatformS", (1040, 2, 521), (0, 23, -259.5), (140,
                  140, 146), CONCRETE))
-H("Shared", part("CityPlatformW", (550, 2, 12), (-245, 23, 7), (140, 140,
-                 146), CONCRETE))
-H("Shared", part("CityPlatformMid", (8, 2, 12), (34, 23, 7), (140, 140,
-                 146), CONCRETE))
-H("Shared", part("CityPlatformE1", (441, 2, 7), (299.5, 23, 4.5), (140,
+H("Shared", part("CityPlatformW", (549.5, 2, 12), (-245.25, 23, 7), (140,
                  140, 146), CONCRETE))
-H("Shared", part("CityPlatformE2", (441, 2, 1), (299.5, 23, 12.5), (140,
+H("Shared", part("CityPlatformMid", (49, 2, 12), (63, 23, 7), (140, 140,
+                 146), CONCRETE))
+H("Shared", part("CityPlatformE", (425.7, 2, 12), (307.15, 23, 7), (140,
                  140, 146), CONCRETE))
-H("Shared", part("CityPlatformE3", (9, 2, 4), (83.5, 23, 10), (140, 140,
-                 146), CONCRETE))
-H("Shared", part("CityPlatformE4", (426, 2, 4), (307, 23, 10), (140, 140,
-                 146), CONCRETE))
 # support pillars under the platform
 for px, pz in ((150, 150), (150, 400), (400, 150), (400, 400), (-150, 150),
                (-150, 400), (-400, 150), (-400, 400), (300, -100),
@@ -965,15 +961,15 @@ for i, ch in enumerate("STASIUN"):
 # stair shaft: platform (y 42) down into the station
 # stair shaft INSIDE the plaza station: descends from level-3 platform hole
 # (x 30..38, z 1..9) into the station; stairs land beside the platform
-H("Shared", part("ShaftWallW", (1, 20, 9), (29.5, 32, 5), (120, 120, 126),
+H("Shared", part("ShaftWallW", (1, 20, 9), (30.4, 32, 5), (120, 120, 126),
                  CONCRETE))
-H("Shared", part("ShaftWallE", (1, 20, 9), (38.5, 32, 5), (120, 120, 126),
+H("Shared", part("ShaftWallE", (1, 20, 9), (37.6, 32, 5), (120, 120, 126),
                  CONCRETE))
 H("Shared", part("ShaftWallS", (9, 20, 1), (34, 32, 9.5), (120, 120, 126),
                  CONCRETE))
-H("Shared", part("ShaftWallN", (9, 20, 1), (34, 32, 0.5), (120, 120, 126),
-                 CONCRETE))
-f_stairs("Shared", 34, 2.2, -8, steps=22, rise=1.0, run_=0.8, w=6, dirz=1,
+H("Shared", part("ShaftWallN", (9, 20, 1), (34, 32, -9.25), (120, 120,
+                 126), CONCRETE))
+f_stairs("Shared", 33, 2.2, -8, steps=22, rise=1.0, run_=0.8, w=6, dirz=1,
          color=(150, 150, 156))
 H("Shared", part("MetroEntranceLine", (10, 0.2, 0.6), (34, 24.15, 10.5),
                  (240, 200, 40), PLASTIC, cancollide=False))
