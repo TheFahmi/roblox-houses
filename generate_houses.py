@@ -757,13 +757,24 @@ for st_name, st_x in METRO_STATIONS:
                      (80, 80, 86), CONCRETE))
     H("Shared", part(f"MStationWallF_{st_name}", (94, 18, 2), (st_x, 11,
                      -26), (80, 80, 86), CONCRETE))
-    H("Shared", part(f"MStationPlatform_{st_name}", (26, 2, 16),
-                     (st_x - 25, 3, 0), (200, 200, 206), MARBLE))
-    H("Shared", part(f"MStationLine_{st_name}", (26, 0.2, 1),
-                     (st_x - 25, 4.15, 7.5), (240, 200, 40), PLASTIC,
+    # platform di KEDUA sisi jalur (rel lewat di tengah, z=0)
+    H("Shared", part(f"MStationPlatform_{st_name}", (26, 2, 7),
+                     (st_x - 25, 3, -7), (200, 200, 206), MARBLE))
+    H("Shared", part(f"MStationPlatform2_{st_name}", (26, 2, 7),
+                     (st_x - 25, 3, 7), (200, 200, 206), MARBLE))
+    H("Shared", part(f"MStationLine_{st_name}", (26, 0.2, 0.6),
+                     (st_x - 25, 4.15, -3.8), (240, 200, 40), PLASTIC,
                      cancollide=False))
+    H("Shared", part(f"MStationLine2_{st_name}", (26, 0.2, 0.6),
+                     (st_x - 25, 4.15, 3.8), (240, 200, 40), PLASTIC,
+                     cancollide=False))
+    # REL STASIUN: meneruskan jalur rel terowongan melewati stasiun
+    H("Shared", part(f"MStationTrack_{st_name}", (94, 0.6, 7),
+                     (st_x, 2.3, 0), (50, 50, 54), SLATE))
     H("Shared", part(f"MStationSignB_{st_name}", (20, 2.4, 0.4),
                      (st_x - 24, 15.5, -25.4), (30, 30, 34), SMOOTH))
+    H("Shared", part(f"MStationSign2B_{st_name}", (20, 2.4, 0.4),
+                     (st_x - 24, 15.5, 25.4), (30, 30, 34), SMOOTH))
     for si, ch in enumerate(st_name.upper()):
         H("Shared", part(f"MStationSignC_{st_name}_{si}", (1, 1.6, 0.2),
                          (st_x - 24 - (len(st_name) - 1) * 0.6
