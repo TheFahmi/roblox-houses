@@ -1366,13 +1366,12 @@ pcall(function()
 						"HumanoidRootPart")
 				if not myHRP then return end
 				for _, other in ipairs(Players:GetPlayers()) do
-					if other == player or not other.Character then
-						continue
-					end
-					local oHRP = other.Character:FindFirstChild(
-						"HumanoidRootPart")
-					if oHRP and (oHRP.Position
-						- myHRP.Position).Magnitude < 25 then
+					local skip = other == player or not other.Character
+					if not skip then
+						local oHRP = other.Character:FindFirstChild(
+							"HumanoidRootPart")
+						if oHRP and (oHRP.Position
+							- myHRP.Position).Magnitude < 25 then
 						local ls = other:FindFirstChild("leaderstats")
 						local cash = ls and ls:FindFirstChild("Cash")
 						if cash then
@@ -1389,6 +1388,7 @@ pcall(function()
 							end
 						end
 						break
+					end
 					end
 				end
 			end)
@@ -1430,10 +1430,8 @@ pcall(function()
 
 	-- ---------- interiors: sleep / TV / shower / light switch ----------
 	for _, folder in ipairs(workspace:GetChildren()) do
-		if not folder:IsA("Folder") or folder.Name == "Shared"
-			or folder.Name == "CityBlock" then
-			continue
-		end
+		if folder:IsA("Folder") and folder.Name ~= "Shared"
+			and folder.Name ~= "CityBlock" then
 		-- light switch near the front door
 		local door = folder:FindFirstChild("Door", true)
 		if door then
