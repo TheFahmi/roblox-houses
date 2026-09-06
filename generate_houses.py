@@ -729,12 +729,15 @@ cx0 = 0
 LIFT_OFF = True
 H("Shared", part("Ground", (1000, 1, 1000), (0, -0.5, 70), (106, 160, 80),
                  GRASS))
-# CityPlatform in 4 pieces: hole above the station lift (x 88..94, z 1..7)
-H("Shared", part("CityPlatformN", (1040, 2, 511), (0, 23, 264.5), (140, 140,
+# CityPlatform pieces: two holes — stairs (x 71..79, z 1..13) and station
+# lift (x 88..94, z 1..7)
+H("Shared", part("CityPlatformN", (1040, 2, 507), (0, 23, 266.5), (140, 140,
                  146), CONCRETE))
 H("Shared", part("CityPlatformS", (1040, 2, 521), (0, 23, -259.5), (140,
                  140, 146), CONCRETE))
 H("Shared", part("CityPlatformW", (591, 2, 12), (-224.5, 23, 7), (140, 140,
+                 146), CONCRETE))
+H("Shared", part("CityPlatformMid", (9, 2, 12), (83.5, 23, 7), (140, 140,
                  146), CONCRETE))
 H("Shared", part("CityPlatformE", (426, 2, 12), (307, 23, 7), (140, 140,
                  146), CONCRETE))
