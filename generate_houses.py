@@ -604,6 +604,21 @@ def f_fence(h, x, z, length, roty=0, y=0, color=OFFWHITE, gap=None):
         seg(0, length)
 
 
+def f_trafficlight(h, x, z, idx, roty=0, y=0):
+    """Working traffic light: pole + 3 lamps (red/yellow/green) animated by
+    HouseLogic. idx offsets the phase so nearby lights alternate."""
+    H(h, part("TLPole", (0.5, 13, 0.5), (x, y + 6.5, z), (40, 40, 44), METAL))
+    H(h, part("TLHead", (2.4, 6, 1.6), (x, y + 10, z), (30, 30, 34), SMOOTH,
+              roty=roty))
+    H(h, part("TLVisor", (2.8, 0.5, 2.2), (x, y + 11.4, z), (30, 30, 34),
+              SMOOTH, roty=roty, cancollide=False))
+    for nm, ly in (("R", 11.6), ("Y", 10), ("G", 8.4)):
+        lx = x + (0.9 * -1 if True else 0)  # lamps on the front face
+        H(h, part(f"TLamp_{nm}{idx}", (1.3, 1.3, 0.5),
+                  (x + 0.0, y + ly, z), (255, 60, 60), NEON,
+                  roty=roty, cancollide=False))
+
+
 def f_roadsign(h, x, z, kind, roty=0, y=0):
     """Traffic sign: dark post + colored sign board with simple markings.
     kind: 'stop' | 'yield' | 'noentry' | 'parking' | 'speed' | 'crossing'
@@ -1684,6 +1699,10 @@ for i in range(52):
 # traffic signs along the road network
 # stop: plaza exits & complex entries; yield: lane merges; noentry: hill
 # one-ways; parking: near carports; speed: long straights; crossing: plaza
+# working traffic lights at the main intersection (alternate phases)
+f_trafficlight("Shared", -88, 32, 1, roty=180, y=0.3)
+f_trafficlight("Shared", -101, 56, 2, roty=0, y=0.3)
+
 SIGNS = [
     (-91, 34, "stop", 0), (-97, 16, "crossing", 0), (-88, 60, "speed", 0),
     (-88, 116, "speed", 0), (-100, 30, "noentry", 90),

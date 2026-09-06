@@ -774,6 +774,45 @@ pcall(function()
 	print("Penthouse elevator ready")
 end)
 
+-- ================= traffic lights: red/yellow/green cycle =================
+do
+	local groups = {}
+	for _, p in ipairs(workspace:GetDescendants()) do
+		if p:IsA("BasePart") and p.Name:match("^TLamp_([RYG])(%d+)$") then
+			local col, idx = p.Name:match("^TLamp_([RYG])(%d+)$")
+			groups[idx] = groups[idx] or { R = {}, Y = {}, G = {} }
+			table.insert(groups[idx][col], p)
+		end
+	end
+	local function setLamps(g, state)
+		for col, lamps in pairs(g) do
+			local on = (col == state) or (state == "RY" and (col == "R"
+				or col == "Y"))
+			for _, lamp in ipairs(lamps) do
+				lamp.Transparency = on and 0 or 0.85
+				lamp.Material = on and Enum.Material.Neon
+					or Enum.Material.Glass
+			end
+		end
+	end
+	task.spawn(function()
+		while true do
+			for idx, g in pairs(groups) do
+				local offset = (tonumber(idx) - 1) * 6
+				local t = (os.clock() + offset) % 14
+				if t < 6 then
+					setLamps(g, "G")
+				elseif t < 7 then
+					setLamps(g, "Y")
+				else
+					setLamps(g, "R")
+				end
+			end
+			task.wait(0.5)
+		end
+	end)
+end
+
 -- ================= gates: swing open on approach, close after =================
 local gates = {}
 for _, p in ipairs(workspace:GetDescendants()) do
