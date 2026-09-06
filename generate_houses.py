@@ -735,11 +735,11 @@ H("Shared", part("CityPlatformN", (1040, 2, 507), (0, 23, 266.5), (140, 140,
                  146), CONCRETE))
 H("Shared", part("CityPlatformS", (1040, 2, 521), (0, 23, -259.5), (140,
                  140, 146), CONCRETE))
-H("Shared", part("CityPlatformW", (591, 2, 12), (-224.5, 23, 7), (140, 140,
+H("Shared", part("CityPlatformW", (550, 2, 12), (-245, 23, 7), (140, 140,
                  146), CONCRETE))
-H("Shared", part("CityPlatformMid", (9, 2, 12), (83.5, 23, 7), (140, 140,
+H("Shared", part("CityPlatformMid", (8, 2, 12), (34, 23, 7), (140, 140,
                  146), CONCRETE))
-H("Shared", part("CityPlatformE", (426, 2, 12), (307, 23, 7), (140, 140,
+H("Shared", part("CityPlatformE", (482, 2, 12), (279, 23, 7), (140, 140,
                  146), CONCRETE))
 # support pillars under the platform
 for px, pz in ((150, 150), (150, 400), (400, 150), (400, 400), (-150, 150),
@@ -754,8 +754,19 @@ METRO_STATIONS = [
 for st_name, st_x in METRO_STATIONS:
     H("Shared", part(f"MStationFloor_{st_name}", (94, 2, 54), (st_x, 1, 0),
                      (60, 60, 66), CONCRETE))
-    H("Shared", part(f"MStationCeil_{st_name}", (94, 2, 54), (st_x, 21, 0),
-                     (70, 70, 76), CONCRETE))
+    if st_name == "Plaza":
+        # ceiling split around the stair-shaft hole (x 30..38, z 1..9)
+        H("Shared", part("MCeilPlazaN", (94, 2, 18), (0, 21, 18), (70, 70,
+                         76), CONCRETE))
+        H("Shared", part("MCeilPlazaS", (94, 2, 28), (0, 21, -13), (70, 70,
+                         76), CONCRETE))
+        H("Shared", part("MCeilPlazaW", (77, 2, 8), (-8.5, 21, 5), (70, 70,
+                         76), CONCRETE))
+        H("Shared", part("MCeilPlazaE", (9, 2, 8), (42.5, 21, 5), (70, 70,
+                         76), CONCRETE))
+    else:
+        H("Shared", part(f"MStationCeil_{st_name}", (94, 2, 54), (st_x, 21,
+                         0), (70, 70, 76), CONCRETE))
     H("Shared", part(f"MStationWallB_{st_name}", (94, 18, 2), (st_x, 11, 26),
                      (80, 80, 86), CONCRETE))
     H("Shared", part(f"MStationWallF_{st_name}", (94, 18, 2), (st_x, 11,
@@ -818,43 +829,62 @@ for ti in range(len(METRO_STATIONS) - 1):
     H("Shared", part(f"MetroTunnelTrack{ti}", (tlen, 0.6, 7), (tcx, 2.3, 0),
                      (50, 50, 54), SLATE))
 
-for i in range(3):
-    H("Shared", part("TrainCar", (20, 6, 8), (47 + i * 21, 6.4, 0), (220,
+# parked train (managed by HouseLogic): 3 cars, middle = "TrainCarMid"
+# stops align the MIDDLE car with each station platform (center = st_x-25)
+CAR_X = (35, 68, 101)
+for ci, ccx in enumerate(CAR_X):
+    nm = "TrainCarMid" if ci == 1 else f"TrainCar{ci}"
+    H("Shared", part(nm, (30, 0.5, 10), (ccx, 3.75, 0), (220, 220, 226),
+                     SMOOTH))
+    # roof + side walls with center door gaps + windows
+    H("Shared", part(f"TrainRoof{ci}", (30, 0.5, 10), (ccx, 9.25, 0), (220,
                      220, 226), SMOOTH))
     for sgn in (-1, 1):
-        H("Shared", part("TrainWindow", (16, 1.8, 0.4), (5 + i * 21, 7.6,
-                         18 + sgn * 4.1), (140, 190, 230), GLASS,
-                         transparency=0.3, cancollide=False))
-    H(h if False else "Shared", part("TrainStripe", (20, 1, 0.5),
-                     (47 + i * 21, 4.2, 4.1 if i % 2 == 0 else -4.1),
-                     (220, 60, 60), PLASTIC, cancollide=False))
-    # interior: floor, seats along walls, hand poles, ceiling lights, doors
-    H("Shared", part("TrainFloorIn", (19, 0.4, 7), (47 + i * 21, 4.6, 0),
-                     (90, 90, 96), SMOOTH))
+        for wx in (-8.75, 8.75):
+            H("Shared", part(f"TrainWall{ci}_{wx}_{sgn}", (12.5, 5, 0.5),
+                             (ccx + wx, 6.5, sgn * 5), (220, 220, 226),
+                             SMOOTH))
+            H("Shared", part(f"TrainWin{ci}_{wx}_{sgn}", (5, 2, 0.2),
+                             (ccx + wx, 6.5, sgn * 5.4), (140, 190, 230),
+                             GLASS, transparency=0.3, cancollide=False))
+        H("Shared", part(f"TrainDoorTop{ci}_{sgn}", (5, 0.5, 0.5),
+                         (ccx, 8.75, sgn * 5), (70, 70, 76), SMOOTH))
+        H("Shared", part(f"TrainStripe{ci}_{sgn}", (30, 1, 0.3),
+                         (ccx, 4.7, sgn * 5.3), (220, 60, 60), PLASTIC,
+                         cancollide=False))
+    # end caps
+    for ex in (-14.75, 14.75):
+        H("Shared", part(f"TrainEnd{ci}_{ex}", (0.5, 5, 9.5), (ccx + ex,
+                         6.5, 0), (220, 220, 226), SMOOTH))
+    # bogies
+    for bx in (-10, 10):
+        H("Shared", part(f"TrainBogie{ci}_{bx}", (6, 1, 3), (ccx + bx, 3.1,
+                         0), (35, 35, 38), METAL))
+    # interior: doorways stay open, seats, poles, lights
     for sgn in (-1, 1):
-        for row in range(4):
-            H("Shared", part("TrainSeat", (3.4, 0.4, 1.4),
-                             (47 + i * 21 - 6 + row * 4, 5.3, sgn * 2.6), (60, 90, 160), FABRIC,
+        for row in range(3):
+            H("Shared", part(f"TrainSeat{ci}_{sgn}_{row}", (4, 0.4, 1.4),
+                             (ccx - 8 + row * 8, 4.4, sgn * 3.8), (60, 90,
+                             160), FABRIC, cancollide=False))
+            H("Shared", part(f"TrainSeatBack{ci}_{sgn}_{row}", (4, 1.6,
+                             0.3), (ccx - 8 + row * 4, 5.4,
+                             sgn * 4.55), (60, 90, 160), FABRIC,
                              cancollide=False))
-            H("Shared", part("TrainSeatBack", (3.4, 1.6, 0.3),
-                             (47 + i * 21 - 6 + row * 4, 6.3, sgn * 3.3), (60, 90, 160), FABRIC,
-                             cancollide=False))
-        for px in (-8, -2.6, 2.6, 8):
-            H("Shared", part("TrainPole", (0.25, 2.6, 0.25),
-                             (47 + i * 21 + px, 7.2, sgn * 3.2),
-                             (200, 200, 210), METAL, cancollide=False))
-    H("Shared", part("TrainCeil", (19, 0.3, 7), (47 + i * 21, 9, 0), (230,
-                     230, 236), SMOOTH))
-    for lx in (-6, 0, 6):
-        H("Shared", part("TrainLamp", (3, 0.2, 1), (47 + i * 21 + lx, 8.8, 0), (255, 245, 220), NEON, cancollide=False))
-    for dx in (-9.6, 9.6):
-        H("Shared", part("TrainDoor", (0.4, 4.4, 1.8), (47 + i * 21 + dx, 6.8, 0), (70, 70, 76), SMOOTH))
-    if i == 0:
-        H("Shared", part("TrainCabWall", (0.4, 6, 7.6), (37.6, 6.4, 0),
-                         (70, 70, 76), SMOOTH))
-        H("Shared", part("TrainConsole", (2.4, 1.6, 3), (36.4, 6, 0),
-                         (40, 40, 46), METAL))
-        H("Shared", part("TrainConsoleScreen", (0.3, 1, 2.2), (35.2, 6.4, 0), (60, 200, 120), NEON, cancollide=False))
+        for px in (-12, -4, 4, 12):
+            H("Shared", part(f"TrainPole{ci}_{sgn}_{px}", (0.25, 2.6,
+                             0.25), (ccx + px, 5.4, sgn * 3.4), (200, 200,
+                             210), METAL, cancollide=False))
+    for lx in (-10, 0, 10):
+        H("Shared", part(f"TrainLamp{ci}_{lx}", (4, 0.2, 1.2), (ccx + lx,
+                         8.95, 0), (255, 245, 220), NEON, cancollide=False))
+# driver cab in the first car
+H("Shared", part("TrainCabWall", (0.5, 5, 9.5), (26.25, 6.5, 0), (70, 70,
+                 76), SMOOTH))
+H("Shared", part("TrainConsole", (3, 1.6, 4), (24, 5.2, 0), (40, 40, 46),
+                 METAL))
+H("Shared", part("TrainConsoleScreen", (0.3, 1.2, 3), (22.3, 5.6, 0),
+                 (60, 200, 120), NEON, cancollide=False))
+
 for pz in (-20, 20):
     H("Shared", part("StationPillar", (3, 18, 3), (-12, 11, pz), (110, 110,
                      116), CONCRETE))
@@ -922,22 +952,25 @@ for i, ch in enumerate("STASIUN"):
                      (-6.3 + i * 1.8, 14, -25.65), GOLD, NEON,
                      cancollide=False))
 # stair shaft: platform (y 42) down into the station
-H("Shared", part("ShaftWallW", (1, 24, 34), (70.5, 12, -4), (120, 120, 126),
+# stair shaft INSIDE the plaza station: descends from level-3 platform hole
+# (x 30..38, z 1..9) into the station; stairs land beside the platform
+H("Shared", part("ShaftWallW", (1, 20, 9), (29.5, 32, 5), (120, 120, 126),
                  CONCRETE))
-H("Shared", part("ShaftWallE", (1, 24, 34), (79.5, 12, -4), (120, 120, 126),
+H("Shared", part("ShaftWallE", (1, 20, 9), (38.5, 32, 5), (120, 120, 126),
                  CONCRETE))
-H("Shared", part("ShaftWallS", (10, 24, 1), (75, 12, 12.5), (120, 120, 126),
+H("Shared", part("ShaftWallS", (9, 20, 1), (34, 32, 9.5), (120, 120, 126),
                  CONCRETE))
-f_stairs("Shared", 75, 2, -8.5, steps=22, rise=1.0, run_=1.0, w=6, dirz=1,
+H("Shared", part("ShaftWallN", (9, 20, 1), (34, 32, 0.5), (120, 120, 126),
+                 CONCRETE))
+f_stairs("Shared", 34, 2.2, -8, steps=22, rise=1.0, run_=0.8, w=6, dirz=1,
          color=(150, 150, 156))
-# entrance marking at the platform edge
-H("Shared", part("MetroEntranceLine", (12, 0.2, 0.6), (75, 24.15, 22.4),
+H("Shared", part("MetroEntranceLine", (10, 0.2, 0.6), (34, 24.15, 10.5),
                  (240, 200, 40), PLASTIC, cancollide=False))
-H("Shared", part("MetroEntranceSign", (8, 2.2, 0.4), (75, 27.2, 21.5),
+H("Shared", part("MetroEntranceSign", (10, 2.2, 0.4), (34, 27.2, 11.8),
                  (30, 30, 34), SMOOTH))
 for i, ch in enumerate("STASIUN"):
     H("Shared", part("MetroEntranceC", (0.9, 1.5, 0.2),
-                     (75 - 3.15 + i * 0.9, 27.2, 21.7), (255, 200, 40),
+                     (34 - 3.15 + i * 0.9, 27.2, 12.1), (255, 200, 40),
                      NEON, cancollide=False))
 # station elevator: glass shaft x 88..94, stops at station floor & platform
 for px in (88, 94):

@@ -2028,21 +2028,24 @@ pcall(function()
 		end
 	end
 
-	local STOPS = {
-		{ "Selatan", -323.75 },
-		{ "Plaza", -26.25 },
-		{ "Timur", 253.75 },
-		{ "Utara", 551.25 },
+		local STOPS = {
+		{ "Selatan", -341.25 },
+		{ "Plaza", -43.75 },
+		{ "Timur", 236.25 },
+		{ "Utara", 533.75 },
 	}
 	local SPEED = 34
 	local DWELL = 8
 
-	local function trainX()
-		for _, p in ipairs(trainParts) do
-			if p.Name == "TrainCar" then
-				return p.CFrame.X
-			end
+	local midCar = nil
+	for _, p in ipairs(trainParts) do
+		if p.Name == "TrainCarMid" then
+			midCar = p
+			break
 		end
+	end
+	local function trainX()
+		return midCar.CFrame.X
 	end
 
 	local moving = false
@@ -2106,9 +2109,9 @@ pcall(function()
 	-- departure boards (one per station)
 	local boards = {}
 	for si, stop in ipairs(STOPS) do
-		local board = Instance.new("Part")
+			local board = Instance.new("Part")
 		board.Name = "MetroBoard" .. si
-		board.Size = Vector3.new(10, 4, 0.4)
+		board.Size = Vector3.new(16, 9, 0.5)
 		board.Color = Color3.fromRGB(20, 24, 30)
 		board.Anchored = true
 		board.CFrame = CFrame.new(stop[2] - 26, 12, -12.5)
