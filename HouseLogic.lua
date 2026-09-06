@@ -657,6 +657,7 @@ do
 		end
 
 		car.PrimaryPart = chassis
+		car:SetAttribute("Fuel", 100)
 		car.Parent = folder
 
 		-- weld wheels via hinge constraints, chassis anchored-free setup
@@ -713,9 +714,20 @@ do
 					while occupant == player
 						and seat.Occupant == hum do
 						local throttle = seat.ThrottleFloat
-						for _, h in ipairs(driveHinges) do
-							h.AngularVelocity = -throttle * 18
-							h.MotorMaxTorque = 5e4
+						local fuel = car:GetAttribute("Fuel")
+						if fuel ~= nil and fuel <= 0 then
+							for _, h in ipairs(driveHinges) do
+								h.AngularVelocity = 0
+							end
+						else
+							if fuel ~= nil then
+								car:SetAttribute("Fuel", math.max(0,
+									fuel - math.abs(throttle) * 0.15))
+							end
+							for _, h in ipairs(driveHinges) do
+								h.AngularVelocity = -throttle * 18
+								h.MotorMaxTorque = 5e4
+							end
 						end
 						task.wait(0.1)
 					end
@@ -840,8 +852,9 @@ do
 			table.insert(hinges, hinge)
 		end
 		m.PrimaryPart = ch
+		m:SetAttribute("Fuel", 100)
+		m:SetAttribute("MaxSpeed", seat.MaxSpeed)
 		m.Parent = workspace
-		-- physics toggle when driven
 		seat:GetPropertyChangedSignal("Occupant"):Connect(function()
 			local driven = seat.Occupant ~= nil
 			for _, p in ipairs(m:GetDescendants()) do
@@ -853,7 +866,23 @@ do
 				for _, h in ipairs(hinges) do
 					h.AngularVelocity = 0
 				end
+				return
 			end
+			task.spawn(function()
+				while seat.Occupant ~= nil and m.Parent do
+					local fuel = m:GetAttribute("Fuel") or 0
+					if fuel <= 0 then
+						seat.MaxSpeed = 0
+						for _, h in ipairs(hinges) do
+							h.AngularVelocity = 0
+						end
+					else
+						m:SetAttribute("Fuel",
+							math.max(0, fuel - 2))
+					end
+					task.wait(1)
+				end
+			end)
 		end)
 		return m
 	end
@@ -1740,6 +1769,160 @@ pcall(function()
 				end)
 			end
 		end
+	end
+
+	-- ---------- gas station: refuel ----------
+	local function findCar(player)
+		local char = player.Character
+		local hrp = char and char:FindFirstChild("HumanoidRootPart")
+		if not hrp then return nil end
+		local best, bestD = nil, 25
+		for _, m in ipairs(workspace:GetDescendants()) do
+			if m:IsA("Model")
+				and (m.Name:match("^Car_") or m.Name == "DrivableCar")
+				and m:GetAttribute("Fuel") ~= nil then
+				local pp = m.PrimaryPart
+					or m:FindFirstChildWhichIsA("BasePart")
+				if pp then
+					local d = (pp.Position - hrp.Position).Magnitude
+					if d < bestD then
+						best, bestD = m, d
+					end
+				end
+			end
+		end
+		return best
+	end
+	if CityFolder then
+		for _, pump in ipairs(CityFolder:GetChildren()) do
+			if pump.Name == "GasPump" then
+				local prompt = Instance.new("ProximityPrompt")
+				prompt.ActionText = "Isi Bensin ($25)"
+				prompt.ObjectText = "Pom Bensin"
+				prompt.HoldDuration = 0.4
+				prompt.Parent = pump
+				prompt.Triggered:Connect(function(player)
+					local carModel = findCar(player)
+					if not carModel then return end
+					if not pay(player, 25) then return end
+					carModel:SetAttribute("Fuel", 100)
+					local seat = carModel:FindFirstChildWhichIsA(
+						"VehicleSeat", true)
+					if seat then
+						seat.MaxSpeed = carModel:GetAttribute(
+							"MaxSpeed") or seat.MaxSpeed
+					end
+				end)
+			end
+		end
+	end
+
+	-- ---------- workshop: repair ----------
+	local wPad = CityFolder and CityFolder:FindFirstChild("WorkshopPad")
+	if wPad then
+		local prompt = Instance.new("ProximityPrompt")
+		prompt.ActionText = "Perbaiki Mobil ($50)"
+		prompt.ObjectText = "Bengkel"
+		prompt.HoldDuration = 0.4
+		prompt.Parent = wPad
+		prompt.Triggered:Connect(function(player)
+			local carModel = findCar(player)
+			if not carModel then return end
+			if not pay(player, 50) then return end
+			carModel:SetAttribute("Fuel", 100)
+			local seat = carModel:FindFirstChildWhichIsA("VehicleSeat",
+				true)
+			if seat then
+				seat.MaxSpeed = carModel:GetAttribute("MaxSpeed")
+					or 45
+			end
+			carModel:PivotTo(wPad.CFrame * CFrame.new(0, 1.4, 0)
+				* CFrame.Angles(0, math.rad(90), 0))
+		end)
+	end
+
+	-- ---------- bank: salary ----------
+	local atm = CityFolder and CityFolder:FindFirstChild("BankATM")
+	if atm then
+		local prompt = Instance.new("ProximityPrompt")
+		prompt.ActionText = "Klaim Gaji ($100 / 5 menit)"
+		prompt.ObjectText = "Bank Kota"
+		prompt.HoldDuration = 0.4
+		prompt.Parent = atm
+		local lastClaim = {}
+		prompt.Triggered:Connect(function(player)
+			local now = os.clock()
+			if lastClaim[player] and now - lastClaim[player] < 300 then
+				return
+			end
+			lastClaim[player] = now
+			local ls = player:FindFirstChild("leaderstats")
+			local cash = ls and ls:FindFirstChild("Cash")
+			if cash then
+				cash.Value += 100
+			end
+		end)
+	end
+
+	-- ---------- hotel: paid sleep ----------
+	local hotelDesk = CityFolder and CityFolder:FindFirstChild("HotelDesk")
+	if hotelDesk then
+		local prompt = Instance.new("ProximityPrompt")
+		prompt.ActionText = "Menginap ($30)"
+		prompt.ObjectText = "Hotel Kota"
+		prompt.HoldDuration = 0.4
+		prompt.Parent = hotelDesk
+		prompt.Triggered:Connect(function(player)
+			if not pay(player, 30) then return end
+			heal(player, true)
+			local char = player.Character
+			local hum = char and char:FindFirstChildOfClass("Humanoid")
+			if hum then
+				hum.WalkSpeed = 0
+				task.wait(2)
+				if hum.Parent then
+					hum.WalkSpeed = 16
+				end
+			end
+		end)
+	end
+
+	-- ---------- underground station elevator ----------
+	local cab2 = workspace:FindFirstChild("LiftCab", true)
+	if cab2 then
+		local stops = { 3.75, 42 }
+		local floorY = 1
+		local moving = false
+		local walls = {}
+		for _, p in ipairs(cab2.Parent:GetChildren()) do
+			if p.Name == "LiftCabWall" then
+				table.insert(walls, p)
+			end
+		end
+		local prompt = Instance.new("ProximityPrompt")
+		prompt.ActionText = "Naik ke Kota"
+		prompt.ObjectText = "Lift Stasiun"
+		prompt.HoldDuration = 0.3
+		prompt.Parent = cab2
+		prompt.Triggered:Connect(function()
+			if moving then return end
+			moving = true
+			local nxt = floorY == 1 and 2 or 1
+			local delta = Vector3.new(0, stops[nxt] - stops[floorY], 0)
+			local dur = math.abs(delta.Y) / 14
+			TweenService:Create(cab2, TweenInfo.new(dur),
+				{ CFrame = cab2.CFrame + delta }):Play()
+			for _, w in ipairs(walls) do
+				TweenService:Create(w, TweenInfo.new(dur),
+					{ CFrame = w.CFrame + delta }):Play()
+			end
+			prompt.ActionText = nxt == 2 and "Turun ke Stasiun"
+				or "Naik ke Kota"
+			task.delay(dur + 0.1, function()
+				floorY = nxt
+				moving = false
+			end)
+		end)
 	end
 
 	-- ---------- music scaffold ----------

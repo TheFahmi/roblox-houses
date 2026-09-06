@@ -729,7 +729,14 @@ cx0 = 0
 LIFT_OFF = True
 H("Shared", part("Ground", (1000, 1, 1000), (0, -0.5, 70), (106, 160, 80),
                  GRASS))
-H("Shared", part("CityPlatform", (1040, 2, 1040), (0, 23, 70), (140, 140,
+# CityPlatform in 4 pieces: hole above the station lift (x 88..94, z 1..7)
+H("Shared", part("CityPlatformN", (1040, 2, 511), (0, 23, 264.5), (140, 140,
+                 146), CONCRETE))
+H("Shared", part("CityPlatformS", (1040, 2, 521), (0, 23, -259.5), (140,
+                 140, 146), CONCRETE))
+H("Shared", part("CityPlatformW", (591, 2, 12), (-224.5, 23, 7), (140, 140,
+                 146), CONCRETE))
+H("Shared", part("CityPlatformE", (426, 2, 12), (307, 23, 7), (140, 140,
                  146), CONCRETE))
 # support pillars under the platform
 for px, pz in ((150, 150), (150, 400), (400, 150), (400, 400), (-150, 150),
@@ -790,6 +797,18 @@ H("Shared", part("ShaftWallS", (10, 24, 1), (75, 12, 12.5), (120, 120, 126),
                  CONCRETE))
 f_stairs("Shared", 75, 2, -12, steps=22, rise=1.0, run_=1.0, w=6, dirz=1,
          color=(150, 150, 156))
+# station elevator: glass shaft x 88..94, stops at station floor & platform
+for px in (88, 94):
+    H("Shared", part("LiftShaftWall", (0.4, 40, 6), (px, 22, 4), GLASSC,
+                     GLASS, transparency=0.55))
+H("Shared", part("LiftShaftBack", (6, 40, 0.4), (91, 22, 1), GLASSC, GLASS,
+                 transparency=0.55))
+H("Shared", part("LiftCab", (5.4, 0.5, 5), (91, 3.75, 4), (60, 60, 66),
+                 METAL))
+for dx, dz, sx_, sz_ in ((0, -2.4, 5.4, 0.2), (-2.4, 0, 0.2, 5),
+                         (2.4, 0, 0.2, 5)):
+    H("Shared", part("LiftCabWall", (sx_, 3, sz_), (91 + dx, 5.6, 4 + dz),
+                     GLASSC, GLASS, transparency=0.3, cancollide=False))
 LIFT_OFF = False
 H("Shared", part("Plaza", (60, 0.3, 40), (0, 0.15, 0), MARBLEC, MARBLE))
 
@@ -1858,6 +1877,74 @@ def build_city():
     for px in (-2, 0, 2):
         H(h, part("PizzaBox", (1.8, 0.5, 1.8), (148 + px, fy + 3.4, 18),
                   (200, 170, 110), PLASTIC, cancollide=False))
+
+    # ---- south row: gas station, bank, workshop, hotel ----
+    # gas station: canopy + 2 pumps + shop
+    _city_shell(h, 60, -60, 22, 16, (230, 60, 50), "GasStation", "POM BENSIN", fy)
+    H(h, part("GasCanopy", (26, 0.8, 14), (60, fy + 7.5, -71), (230, 60, 50),
+              SMOOTH))
+    for px in (-10, 10):
+        for pz in (-77, -65):
+            H(h, part("GasCanopyPost", (0.8, 7, 0.8), (60 + px, fy + 3.5,
+                      pz), (120, 120, 126), METAL))
+    for px in (-4, 4):
+        H(h, part("GasPump", (1.6, 4.5, 2.2), (60 + px, fy + 2.25, -71),
+                  (220, 60, 50), SMOOTH))
+        H(h, part("GasPumpScreen", (1, 1.4, 0.2), (60 + px, fy + 3.2,
+                  -72.2), (40, 200, 90), NEON, cancollide=False))
+    H(h, part("GasPad", (18, 0.3, 12), (60, fy + 0.15, -71), (70, 70, 74),
+              SMOOTH))
+
+    _city_shell(h, 105, -60, 22, 16, (190, 160, 90), "Bank", "BANK KOTA", fy)
+    H(h, part("BankATM", (2, 4.5, 1), (98, fy + 2.25, -66), (40, 90, 200),
+              SMOOTH))
+    H(h, part("BankATMScreen", (1.4, 1, 0.2), (98, fy + 3, -66.7), (60, 200,
+              120), NEON, cancollide=False))
+    H(h, part("BankVault", (6, 7, 4), (105, fy + 3.5, -62), (90, 90, 96),
+              METAL))
+    H(h, part("BankVaultDoor", (0.5, 5.5, 5.5), (105, fy + 2.75, -59.8),
+              GOLD, FOIL))
+
+    _city_shell(h, 148, -60, 22, 16, (160, 120, 60), "Workshop", "BENGKEL", fy)
+    H(h, part("WorkshopPad", (12, 0.3, 10), (148, fy + 0.15, -64), (70, 70,
+              74), SMOOTH))
+    H(h, part("WorkshopTool", (4, 3, 1.5), (142, fy + 1.5, -62), (60, 60,
+              66), METAL))
+    H(h, part("WorkshopLift", (8, 0.6, 8), (152, fy + 2, -62), (160, 160,
+              166), METAL))
+    for px in (-3, 3):
+        H(h, part("WorkshopLiftLeg", (0.8, 2, 0.8), (152 + px, fy + 1,
+                  -62), (90, 90, 96), METAL))
+
+    _city_shell(h, 195, -60, 24, 18, (120, 90, 160), "Hotel", "HOTEL KOTA", fy)
+    for fl in (1, 2):
+        H(h, part(f"HotelWall2F{fl}", (24, 10, 0.5), (195, fy + fl * 10
+                  - 5, -68.75), (120, 90, 160), SMOOTH))
+        H(h, part(f"HotelGlass2F{fl}", (22, 9, 0.4), (195, fy + fl * 10
+                  - 5, -68.55), GLASSC, GLASS, transparency=0.4,
+                  cancollide=False))
+    H(h, part("HotelRoof", (25, 0.6, 19), (195, fy + 20.3, -60), (90, 65,
+              120), SMOOTH))
+    H(h, part("HotelDesk", (8, 3, 1.5), (195, fy + 1.5, -66), DARKWOOD,
+              WOOD))
+    for px in (-6, 6):
+        H(h, part("HotelSofa", (4, 1.8, 2.2), (195 + px, fy + 0.9, -62),
+                  (120, 90, 160), FABRIC))
+
+    # road connector: main street -> south row (z -75)
+    for i in range(12):
+        H(h, part(f"SouthRoad{i}", (9, 0.2, 9), (60, 0.1, 20 - i * 9),
+                  PATHC, COBBLE))
+    H(h, part("SouthRoadEW", (180, 0.2, 9), (105, 0.1, -75), PATHC, COBBLE))
+    f_streetlight(h, 45, -70)
+    f_streetlight(h, 130, -70)
+    f_streetlight(h, 180, -70)
+
+    # NPCs for the south row
+    f_npc(h, 53, -73.5, 0, (230, 60, 50), (60, 60, 70), (255, 204, 170))
+    f_npc(h, 100, -73.5, 0, (190, 160, 90), (50, 50, 60), (255, 204, 170))
+    f_npc(h, 143, -73.5, 0, (160, 120, 60), (60, 60, 66), (255, 204, 170))
+    f_npc(h, 190, -73.5, 0, (120, 90, 160), (70, 70, 80), (255, 204, 170))
 
 
 build_city()
