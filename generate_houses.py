@@ -2160,9 +2160,10 @@ f_npc("Shared", -10, 8, 0, (60, 110, 200), (70, 70, 80), (255, 204, 170))
 # single-unit owner house (excluded from complexes & PRICES)
 assert os.environ.get("WITH_PENTHOUSE", "1") == "1"
 
-# HILLS=1 (default): north complexes (Castle, Mansion rows) sit on a stepped
-# hill; HILLS=0: flat world. Revert anytime:  HILLS=0 python generate_houses.py
-HILLS = os.environ.get("HILLS", "1") == "1"
+# HILLS: north complexes (Castle, Mansion rows) on a stepped hill.
+# Default OFF (flat world). Enable with:  HILLS=1 python generate_houses.py
+# NOTE: hill heights are pre-lift (WORLD_LIFT) — re-tune if both are enabled.
+HILLS = os.environ.get("HILLS", "0") == "1"
 
 BUILDERS = [
     ("TinyHouse", build_TinyHouse, 0.5, 26),
