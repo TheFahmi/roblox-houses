@@ -21,7 +21,7 @@ pcall(function()
 	store = game:GetService("DataStoreService"):GetDataStore("HouseGame_v1")
 end)
 
-local function loadCash(player)
+local function loadData(player)
 	if not store then return nil end
 	local ok, data = pcall(function()
 		return store:GetAsync("cash_" .. player.UserId)
@@ -29,16 +29,23 @@ local function loadCash(player)
 	return ok and data or nil
 end
 
-local function saveCash(player)
+local function saveData(player)
 	if not store then return end
 	local ls = player:FindFirstChild("leaderstats")
 	local cash = ls and ls:FindFirstChild("Cash")
+	local rep = ls and ls:FindFirstChild("Rep")
 	if cash then
+		local data = {
+			c = cash.Value,
+			r = rep and rep.Value or 0,
+			cars = player:GetAttribute("OwnedCars") or "",
+		}
 		pcall(function()
-			store:SetAsync("cash_" .. player.UserId, cash.Value)
+			store:SetAsync("cash_" .. player.UserId, data)
 		end)
 	end
 end
+local saveCash = saveData -- legacy name used by older blocks
 
 Players.PlayerAdded:Connect(function(player)
 	local ls = Instance.new("Folder")
@@ -47,10 +54,20 @@ Players.PlayerAdded:Connect(function(player)
 	cash.Name = "Cash"
 	cash.Value = 200
 	cash.Parent = ls
+	local rep = Instance.new("IntValue")
+	rep.Name = "Rep"
+	rep.Value = 0
+	rep.Parent = ls
 	ls.Parent = player
-	local saved = loadCash(player)
+	local saved = loadData(player)
 	if saved then
-		cash.Value = saved
+		if type(saved) == "number" then
+			cash.Value = saved -- legacy save (cash only)
+		else
+			cash.Value = saved.c or 200
+			rep.Value = saved.r or 0
+			player:SetAttribute("OwnedCars", saved.cars or "")
+		end
 	end
 end)
 
@@ -349,6 +366,7 @@ game:BindToClose(function()
 	end
 end)
 
+local pizzaJobs = {} -- pizza deliveries in progress
 -- ================= courier job: route of house drop-offs =================
 -- Depot near spawn -> touch drop pad at each house in order -> route bonus.
 local PAID_PER_LEG = 15
@@ -523,6 +541,7 @@ Players.PlayerRemoving:Connect(function(player)
 end)
 
 -- ================= drivable cars (replace static CarBody builds) ==========
+local MAKE_CAR = nil -- set by the block below; reused by shop/police
 do
 	local function buildCar(folder)
 		local body = folder:FindFirstChild("CarBody", true)
@@ -695,6 +714,82 @@ do
 		if folder:IsA("Folder") and folder:FindFirstChild("CarBody", true) then
 			pcall(buildCar, folder)
 		end
+	end
+
+	-- parametric factory reused by the car shop / police HQ spawns
+	MAKE_CAR = function(cf, color, maxSpeed, name)
+		local m = Instance.new("Model")
+		m.Name = name or "DrivableCar"
+		local ch = Instance.new("Part")
+		ch.Name = "Chassis"
+		ch.Size = Vector3.new(7.5, 1, 14)
+		ch.Color = color
+		ch.Material = Enum.Material.SmoothPlastic
+		ch.Anchored = true
+		ch.CFrame = cf * CFrame.new(0, 0.4, 0)
+		ch.Parent = m
+		local sh = Instance.new("Part")
+		sh.Name = "Shell"
+		sh.Size = Vector3.new(7.5, 2.2, 14)
+		sh.Color = color
+		sh.Material = Enum.Material.SmoothPlastic
+		sh.Anchored = true
+		sh.CanCollide = false
+		sh.CFrame = ch.CFrame * CFrame.new(0, 1.6, 0)
+		sh.Parent = m
+		local seat = Instance.new("VehicleSeat")
+		seat.Name = "DriveSeat"
+		seat.Size = Vector3.new(5, 0.6, 3)
+		seat.Color = Color3.fromRGB(25, 25, 28)
+		seat.MaxSpeed = maxSpeed or 45
+		seat.Torque = 9
+		seat.TurnSpeed = 6
+		seat.Anchored = true
+		seat.CFrame = ch.CFrame * CFrame.new(0, 1.45, 1.5)
+		seat.Parent = m
+		local wheels = {}
+		for _, wx in ipairs({ -3.9, 3.9 }) do
+			for _, wz in ipairs({ -4.8, 4.8 }) do
+				local wheel = Instance.new("Part")
+				wheel.Name = "Wheel"
+				wheel.Size = Vector3.new(1.2, 3, 3)
+				wheel.Color = Color3.fromRGB(35, 35, 38)
+				wheel.CFrame = ch.CFrame * CFrame.new(wx, -0.4, wz)
+				wheel.Anchored = true
+				wheel.Parent = m
+				table.insert(wheels, { wheel, wz < 0 })
+			end
+		end
+		local hinges = {}
+		for _, e in ipairs(wheels) do
+			local a0 = Instance.new("Attachment")
+			a0.CFrame = ch.CFrame:ToObjectSpace(e[1].CFrame)
+			a0.Parent = ch
+			local a1 = Instance.new("Attachment")
+			a1.Parent = e[1]
+			local hinge = Instance.new("HingeConstraint")
+			hinge.Attachment0 = a0
+			hinge.Attachment1 = a1
+			hinge.Parent = e[1]
+			table.insert(hinges, hinge)
+		end
+		m.PrimaryPart = ch
+		m.Parent = workspace
+		-- physics toggle when driven
+		seat:GetPropertyChangedSignal("Occupant"):Connect(function()
+			local driven = seat.Occupant ~= nil
+			for _, p in ipairs(m:GetDescendants()) do
+				if p:IsA("BasePart") then
+					p.Anchored = not driven
+				end
+			end
+			if not driven then
+				for _, h in ipairs(hinges) do
+					h.AngularVelocity = 0
+				end
+			end
+		end)
+		return m
 	end
 end
 
@@ -934,6 +1029,10 @@ pcall(function()
 		if cash then
 			cash.Value = math.max(0, cash.Value - amount)
 		end
+		local vrep = ls and ls:FindFirstChild("Rep")
+		if vrep then
+			vrep.Value = math.max(0, vrep.Value - 1)
+		end
 		local gui = Instance.new("BillboardGui")
 		gui.Size = UDim2.new(0, 320, 0, 70)
 		gui.StudsOffset = Vector3.new(0, 5.4, 0)
@@ -979,6 +1078,659 @@ pcall(function()
 					end
 				end
 			end
+		end
+	end)
+end)
+
+-- ================= CITY: shops, jobs, interiors, NPCs =====================
+pcall(function()
+	local CityFolder = workspace:FindFirstChild("CityBlock")
+
+	-- helper: heal + effects
+	local function heal(player, full)
+		local char = player.Character
+		local hum = char and char:FindFirstChildOfClass("Humanoid")
+		if hum then
+			hum.Health = full and hum.MaxHealth
+				or math.min(hum.MaxHealth, hum.Health + 25)
+		end
+	end
+
+	local function carryItem(player, color, seconds)
+		local char = player.Character
+		local head = char and char:FindFirstChild("Head")
+		if not head then return end
+		local item = Instance.new("Part")
+		item.Size = Vector3.new(1.6, 1.6, 1.6)
+		item.Color = color
+		item.CanCollide = false
+		item.CFrame = head.CFrame * CFrame.new(0, 2.4, 0)
+		local weld = Instance.new("WeldConstraint")
+		weld.Part0 = head
+		weld.Part1 = item
+		weld.Parent = item
+		item.Parent = char
+		task.delay(seconds or 3, function()
+			item:Destroy()
+		end)
+	end
+
+	local function pay(player, amount)
+		local ls = player:FindFirstChild("leaderstats")
+		local cash = ls and ls:FindFirstChild("Cash")
+		if not cash or cash.Value < amount then
+			return false
+		end
+		cash.Value -= amount
+		return true
+	end
+
+	-- ---------- car shop ----------
+	local CAR_MODELS = {
+		{ "Kota", 800, 40, Color3.fromRGB(120, 180, 220) },
+		{ "Truk", 1500, 35, Color3.fromRGB(90, 90, 96) },
+		{ "Sport", 2500, 60, Color3.fromRGB(220, 50, 50) },
+		{ "SUV", 3000, 45, Color3.fromRGB(60, 90, 60) },
+		{ "Mewah", 5000, 55, Color3.fromRGB(212, 175, 55) },
+	}
+	local spawnedCar = {} -- player -> model
+	local function despawnOwned(player)
+		if spawnedCar[player] then
+			spawnedCar[player]:Destroy()
+			spawnedCar[player] = nil
+		end
+	end
+	Players.PlayerRemoving:Connect(despawnOwned)
+
+	local function ownsCar(player, id)
+		local owned = player:GetAttribute("OwnedCars") or ""
+		return ("," .. owned .. ","):find("," .. id .. ",") ~= nil
+	end
+	local function addOwnedCar(player, id)
+		local owned = player:GetAttribute("OwnedCars") or ""
+		player:SetAttribute("OwnedCars", owned .. "," .. id)
+		saveData(player)
+	end
+
+	local shopPadA = CityFolder and CityFolder:FindFirstChild("ShopPad-6")
+	local shopPadB = CityFolder and CityFolder:FindFirstChild("ShopPad6")
+	for i, def in ipairs(CAR_MODELS) do
+		local pad = Instance.new("Part")
+		pad.Name = "CarBuyPad" .. i
+		pad.Size = Vector3.new(2.6, 1.4, 0.6)
+		pad.Color = Color3.fromRGB(255, 200, 40)
+		pad.Material = Enum.Material.Neon
+		pad.Anchored = true
+		pad.CFrame = CFrame.new(60, 4.6, -22)
+			* CFrame.new(-6 + (i - 1) * 3, 0, 0)
+		pad.Parent = CityFolder
+		local click = Instance.new("ClickDetector")
+		click.MaxActivationDistance = 18
+		click.Parent = pad
+		click.MouseClick:Connect(function(player)
+			local id, price, spd, col = def[1], def[2], def[3], def[4]
+			if not ownsCar(player, id) then
+				if not pay(player, price) then return end
+				addOwnedCar(player, id)
+			end
+			despawnOwned(player)
+			local padCF = (i % 2 == 0) and shopPadA or shopPadB
+			local base = padCF and padCF.CFrame
+				or CFrame.new(60, 0.5, -18)
+			spawnedCar[player] = MAKE_CAR(base * CFrame.new(0, 0.3, 0),
+				col, spd, "Car_" .. player.Name)
+		end)
+	end
+
+	-- ---------- cafe & grocery ----------
+	local FOODS = {
+		{ "CafeCounter", "Nasi Goreng", 15, Color3.fromRGB(230, 160, 60) },
+		{ "CafeCounter", "Burger", 20, Color3.fromRGB(190, 120, 60) },
+		{ "CafeCounter", "Kopi", 10, Color3.fromRGB(90, 55, 30) },
+		{ "GroceryCounter", "Snack", 8, Color3.fromRGB(240, 200, 60) },
+		{ "GroceryCounter", "Soda", 10, Color3.fromRGB(220, 60, 60) },
+	}
+	for _, def in ipairs(FOODS) do
+		local counter = CityFolder and CityFolder:FindFirstChild(def[1])
+		if counter then
+			local pad = Instance.new("Part")
+			pad.Size = Vector3.new(1.8, 1, 0.5)
+			pad.Color = Color3.fromRGB(255, 200, 40)
+			pad.Material = Enum.Material.Neon
+			pad.Anchored = true
+			pad.CFrame = counter.CFrame * CFrame.new(0, 2.6, 0)
+			pad.Parent = counter.Parent
+			local prompt = Instance.new("ProximityPrompt")
+			prompt.ActionText = def[2] .. " ($" .. def[3] .. ")"
+			prompt.ObjectText = "Makanan"
+			prompt.HoldDuration = 0.3
+			prompt.Parent = pad
+			prompt.Triggered:Connect(function(player)
+				if not pay(player, def[3]) then return end
+				carryItem(player, def[4], 3)
+				task.delay(3, function()
+					if def[2] == "Kopi" then
+						local hum = player.Character
+							and player.Character:FindFirstChildOfClass(
+								"Humanoid")
+						if hum then
+							hum.WalkSpeed = 22
+							task.delay(30, function()
+								if hum.Parent then
+									hum.WalkSpeed = 16
+								end
+							end)
+						end
+					else
+						heal(player, true)
+					end
+				end)
+			end)
+		end
+	end
+
+	-- ---------- hospital ----------
+	local hospDesk = CityFolder and CityFolder:FindFirstChild("HospDesk")
+	if hospDesk then
+		local prompt = Instance.new("ProximityPrompt")
+		prompt.ActionText = "Berobat ($50)"
+		prompt.ObjectText = "Rumah Sakit"
+		prompt.HoldDuration = 0.3
+		prompt.Parent = hospDesk
+		prompt.Triggered:Connect(function(player)
+			if pay(player, 50) then
+				heal(player, true)
+			end
+		end)
+	end
+
+	-- ---------- pizza job ----------
+	local pizzaCounter = CityFolder and CityFolder:FindFirstChild(
+		"PizzaCounter")
+	if pizzaCounter then
+		local prompt = Instance.new("ProximityPrompt")
+		prompt.ActionText = "Antar Pizza"
+		prompt.ObjectText = "Pizza Kota ($40/antar)"
+		prompt.HoldDuration = 0.3
+		prompt.Parent = pizzaCounter
+		prompt.Triggered:Connect(function(player)
+			if jobs[player] then return end
+			if pizzaJobs[player] then return end
+			local names = {}
+			for houseName in pairs(dropPads) do
+				table.insert(names, houseName)
+			end
+			if #names == 0 then return end
+			local target = names[math.random(#names)]
+			pizzaJobs[player] = { target = target, left = 5, earned = 0 }
+			carryItem(player, Color3.fromRGB(200, 170, 110), 600)
+			setJobText(player, "Antar pizza ke: " .. target)
+		end)
+	end
+
+	-- ---------- bus at the depot ----------
+	local depotPart = workspace:FindFirstChild("CourierDepot")
+	if depotPart then
+		local bus = Instance.new("Model")
+		bus.Name = "CityBus"
+		local ch = Instance.new("Part")
+		ch.Size = Vector3.new(9, 1.2, 30)
+		ch.Color = Color3.fromRGB(70, 130, 200)
+		ch.Anchored = true
+		ch.CFrame = CFrame.new(30, 1.6, 76.5)
+		ch.Parent = bus
+		local sh = Instance.new("Part")
+		sh.Size = Vector3.new(9, 4, 30)
+		sh.Color = Color3.fromRGB(70, 130, 200)
+		sh.Anchored = true
+		sh.CanCollide = false
+		sh.CFrame = ch.CFrame * CFrame.new(0, 2.6, 0)
+		sh.Parent = bus
+		local seat = Instance.new("VehicleSeat")
+		seat.Size = Vector3.new(4, 0.6, 3)
+		seat.MaxSpeed = 32
+		seat.Torque = 12
+		seat.TurnSpeed = 4
+		seat.Anchored = true
+		seat.CFrame = ch.CFrame * CFrame.new(0, 1.2, -12)
+		seat.Parent = bus
+		for row = 0, 2 do
+			for side = -1, 1, 2 do
+				local s = Instance.new("Seat")
+				s.Size = Vector3.new(2.6, 0.5, 2.6)
+				s.Color = Color3.fromRGB(60, 60, 70)
+				s.Anchored = true
+				s.CFrame = ch.CFrame * CFrame.new(side * 2.4, 1.2,
+					-4 + row * 5)
+				s.Parent = bus
+			end
+		end
+		bus.PrimaryPart = ch
+		bus.Parent = workspace
+		seat:GetPropertyChangedSignal("Occupant"):Connect(function()
+			local driven = seat.Occupant ~= nil
+			for _, p in ipairs(bus:GetDescendants()) do
+				if p:IsA("BasePart") then
+					p.Anchored = not driven
+				end
+			end
+		end)
+	end
+
+	-- ---------- player police duty ----------
+	local hqDesk = CityFolder and CityFolder:FindFirstChild("HQDesk")
+	local hqPad = CityFolder and CityFolder:FindFirstChild("HQGaragePad")
+	local dutyTag = {}
+	local dutyCar = {}
+	local function setDuty(player, on)
+		local char = player.Character
+		local head = char and char:FindFirstChild("Head")
+		if on then
+			onDuty[player] = true
+			if head then
+				local gui = Instance.new("BillboardGui")
+				gui.Name = "DutyTag"
+				gui.Size = UDim2.new(0, 120, 0, 34)
+				gui.StudsOffset = Vector3.new(0, 2.2, 0)
+				gui.AlwaysOnTop = true
+				gui.Parent = head
+				local l = Instance.new("TextLabel")
+				l.Size = UDim2.new(1, 0, 1, 0)
+				l.BackgroundTransparency = 0.3
+				l.BackgroundColor3 = Color3.fromRGB(30, 40, 90)
+				l.TextColor3 = Color3.new(1, 1, 1)
+				l.TextScaled = true
+				l.Font = Enum.Font.GothamBold
+				l.Text = "POLISI"
+				l.Parent = gui
+				dutyTag[player] = gui
+			end
+			if hqPad and MAKE_CAR then
+				dutyCar[player] = MAKE_CAR(hqPad.CFrame
+					* CFrame.new(0, 0.3, 0),
+					Color3.fromRGB(240, 240, 245), 55,
+					"PoliceCar_" .. player.Name)
+			end
+			local tool = Instance.new("Tool")
+			tool.Name = "Tilang"
+			tool.RequiresHandle = true
+			local handle = Instance.new("Part")
+			handle.Name = "Handle"
+			handle.Size = Vector3.new(0.6, 1.6, 0.4)
+			handle.Color = Color3.fromRGB(120, 20, 20)
+			handle.Parent = tool
+			tool.Parent = player.Backpack
+			tool.Activated:Connect(function()
+				local myHRP = player.Character
+					and player.Character:FindFirstChild(
+						"HumanoidRootPart")
+				if not myHRP then return end
+				for _, other in ipairs(Players:GetPlayers()) do
+					if other == player or not other.Character then
+						continue
+					end
+					local oHRP = other.Character:FindFirstChild(
+						"HumanoidRootPart")
+					if oHRP and (oHRP.Position
+						- myHRP.Position).Magnitude < 25 then
+						local ls = other:FindFirstChild("leaderstats")
+						local cash = ls and ls:FindFirstChild("Cash")
+						if cash then
+							cash.Value = math.max(0, cash.Value - 120)
+							local myLs = player:FindFirstChild("leaderstats")
+							local myCash = myLs
+								and myLs:FindFirstChild("Cash")
+							if myCash then
+								myCash.Value += 40
+							end
+							local vrep = ls:FindFirstChild("Rep")
+							if vrep then
+								vrep.Value = math.max(0, vrep.Value - 1)
+							end
+						end
+						break
+					end
+				end
+			end)
+			tool.Parent = player.Character or player:WaitForChild("Backpack")
+		else
+			onDuty[player] = nil
+			if dutyTag[player] then
+				dutyTag[player]:Destroy()
+				dutyTag[player] = nil
+			end
+			if dutyCar[player] then
+				dutyCar[player]:Destroy()
+				dutyCar[player] = nil
+			end
+			local bp = player:FindFirstChild("Backpack")
+			local t = bp and bp:FindFirstChild("Tilang")
+			if t then t:Destroy() end
+			local ct = player.Character
+			and player.Character:FindFirstChild("Tilang")
+			if ct then ct:Destroy() end
+		end
+	end
+	if hqDesk then
+		local prompt = Instance.new("ProximityPrompt")
+		prompt.ActionText = "Jadilah Polisi"
+		prompt.ObjectText = "Kantor Polisi"
+		prompt.HoldDuration = 0.5
+		prompt.Parent = hqDesk
+		prompt.Triggered:Connect(function(player)
+			setDuty(player, not onDuty[player])
+			prompt.ActionText = onDuty[player] and "Lepas seragam"
+				or "Jadilah Polisi"
+		end)
+	end
+	Players.PlayerRemoving:Connect(function(player)
+		setDuty(player, false)
+		despawnOwned(player)
+	end)
+
+	-- ---------- interiors: sleep / TV / shower / light switch ----------
+	for _, folder in ipairs(workspace:GetChildren()) do
+		if not folder:IsA("Folder") or folder.Name == "Shared"
+			or folder.Name == "CityBlock" then
+			continue
+		end
+		-- light switch near the front door
+		local door = folder:FindFirstChild("Door", true)
+		if door then
+			local switch = Instance.new("Part")
+			switch.Name = "LightSwitch"
+			switch.Size = Vector3.new(0.4, 1, 0.5)
+			switch.Color = Color3.fromRGB(240, 240, 240)
+			switch.Anchored = true
+			switch.CFrame = door.CFrame * CFrame.new(
+				door.Size.X / 2 + 2.2, 2.5, 3)
+			switch.Parent = folder
+			local light = Instance.new("PointLight")
+			light.Brightness = 0.6
+			light.Range = 45
+			light.Color = Color3.fromRGB(255, 230, 180)
+			light.Enabled = false
+			light.Parent = switch
+			local prompt = Instance.new("ProximityPrompt")
+			prompt.ActionText = "Saklar Lampu"
+			prompt.HoldDuration = 0.2
+			prompt.Parent = switch
+			prompt.Triggered:Connect(function(player)
+				light.Enabled = not light.Enabled
+			end)
+		end
+		-- per-floor ceiling light follows the switch
+		for _, p in ipairs(folder:GetDescendants()) do
+			if p:IsA("BasePart") and (p.Name == "LightSwitch") then
+				local pl = p:FindFirstChildOfClass("PointLight")
+				if pl then
+					local conn
+					conn = pl:GetPropertyChangedSignal("Enabled")
+						:Connect(function()
+							for _, sib in ipairs(
+								folder:GetDescendants()) do
+								if sib:IsA("PointLight")
+									and sib ~= pl then
+									sib.Enabled = pl.Enabled
+								end
+							end
+						end)
+				end
+			end
+		end
+		-- sleep on beds (owner only)
+		for _, p in ipairs(folder:GetDescendants()) do
+			if p:IsA("BasePart") and p.Name == "BedBase" then
+				local prompt = Instance.new("ProximityPrompt")
+				prompt.ActionText = "Tidur"
+				prompt.ObjectText = "Kasur"
+				prompt.HoldDuration = 0.4
+				prompt.Parent = p
+				prompt.Triggered:Connect(function(player)
+					if folder:GetAttribute("OwnerId")
+						and folder:GetAttribute("OwnerId")
+							~= player.UserId then
+						return
+					end
+					local char = player.Character
+					local hrp = char and char:FindFirstChild(
+						"HumanoidRootPart")
+					local hum = char
+						and char:FindFirstChildOfClass("Humanoid")
+					if not hrp or not hum then return end
+					local oldCF = hrp.CFrame
+					hrp.CFrame = p.CFrame * CFrame.new(0, 3, 0)
+						* CFrame.Angles(math.rad(-90), 0, 0)
+					hrp.Anchored = true
+					local gui = Instance.new("ScreenGui")
+					gui.Name = "SleepFade"
+					gui.Parent = player:WaitForChild("PlayerGui", 3)
+					local fade = Instance.new("Frame")
+					fade.Size = UDim2.new(1, 0, 1, 0)
+					fade.BackgroundColor3 = Color3.new(0, 0, 0)
+					fade.BackgroundTransparency = 1
+					fade.Parent = gui
+					TweenService:Create(fade, TweenInfo.new(0.8),
+						{ BackgroundTransparency = 0.25 }):Play()
+					heal(player, true)
+					task.delay(4, function()
+						hrp.Anchored = false
+						hrp.CFrame = oldCF
+						TweenService:Create(fade, TweenInfo.new(0.5),
+							{ BackgroundTransparency = 1 }):Play()
+						task.delay(0.6, function()
+							gui:Destroy()
+						end)
+					end)
+				end)
+			end
+			-- TV channels
+			if p:IsA("BasePart") and p.Name == "TV" then
+				local channels = {
+					{ "Berita", Color3.fromRGB(60, 90, 160) },
+					{ "Olahraga", Color3.fromRGB(50, 150, 70) },
+					{ "Film", Color3.fromRGB(160, 40, 40) },
+					{ "Kartun", Color3.fromRGB(240, 180, 40) },
+					{ "Musik", Color3.fromRGB(140, 60, 180) },
+				}
+				local chIdx = 0
+				local panel = p.Parent and p.Parent:FindFirstChild("TVPanel")
+				local prompt = Instance.new("ProximityPrompt")
+				prompt.ActionText = "Ganti Channel"
+				prompt.ObjectText = "TV"
+				prompt.HoldDuration = 0.2
+				prompt.Parent = p
+				prompt.Triggered:Connect(function(player)
+					if folder:GetAttribute("OwnerId")
+						and folder:GetAttribute("OwnerId")
+							~= player.UserId then
+						return
+					end
+					chIdx = chIdx % #channels + 1
+					if panel then
+						panel.Color = channels[chIdx][2]
+					end
+					prompt.ActionText = "Channel: "
+						.. channels[chIdx][1]
+				end)
+			end
+			-- shower
+			if p:IsA("BasePart") and p.Name == "Shower" then
+				local prompt = Instance.new("ProximityPrompt")
+				prompt.ActionText = "Mandi"
+				prompt.HoldDuration = 0.3
+				prompt.Parent = p
+				prompt.Triggered:Connect(function(player)
+					if folder:GetAttribute("OwnerId")
+						and folder:GetAttribute("OwnerId")
+							~= player.UserId then
+						return
+					end
+					heal(player, false)
+					local p2 = Instance.new("ParticleEmitter")
+					p2.Texture = "rbxasset://textures/particles/sparkles_main.dds"
+					p2.Rate = 40
+					p2.Lifetime = NumberRange.new(0.5)
+					p2.Speed = NumberRange.new(6)
+					p2.Color = ColorSequence.new(Color3.fromRGB(160,
+						210, 255))
+					p2.Parent = p
+					task.delay(3, function()
+						p2.Enabled = false
+					end)
+				end)
+			end
+		end
+	end
+
+	-- ---------- NPC dialogs ----------
+	local CITY_CENTERS = {
+		{ Vector3.new(105, 3, -31.5), { "Selamat datang di Toko Mobil!",
+			"Mau beli mobil? Klik tombol kuning di counter." } },
+		{ Vector3.new(183.75, 3, -31.5), { "Kopi kami paling enak!",
+			"Kopi bikin kamu lari cepat 30 detik loh." } },
+		{ Vector3.new(259, 3, -31.5), { "Banyak snack murah hari ini!",
+			"Semuanya di bawah $10." } },
+		{ Vector3.new(105, 3, 42), { "Yang sakit? Sini saya bantu.",
+			"Berobat cuma $50." } },
+		{ Vector3.new(183.75, 3, 42), { "Hukum harus ditegakkan!",
+			"Jadi polisi lewat pad seragam di samping." } },
+		{ Vector3.new(259, 3, 42), { "Pizza panas dari tanur!",
+			"Kerja antar pizza, gajinya besar." } },
+	}
+	for _, p in ipairs(workspace:GetDescendants()) do
+		if p:IsA("BasePart") and p.Name == "NPCTorso" then
+			local best, bestD = nil, math.huge
+			for _, c in ipairs(CITY_CENTERS) do
+				local d = (Vector3.new(p.Position.X, 3, p.Position.Z)
+					- c[1]).Magnitude
+				if d < bestD then
+					best, bestD = c, d
+				end
+			end
+			if best then
+				local lines = best[2]
+				local i = 0
+				local prompt = Instance.new("ProximityPrompt")
+				prompt.ActionText = "Bicara"
+				prompt.ObjectText = "Warga"
+				prompt.HoldDuration = 0.2
+				prompt.Parent = p
+				local gui = Instance.new("BillboardGui")
+				gui.Size = UDim2.new(0, 240, 0, 50)
+				gui.StudsOffset = Vector3.new(0, 3.4, 0)
+				gui.AlwaysOnTop = true
+				gui.Enabled = false
+				gui.Parent = p
+				local l = Instance.new("TextLabel")
+				l.Size = UDim2.new(1, 0, 1, 0)
+				l.BackgroundColor3 = Color3.new(0, 0, 0)
+				l.BackgroundTransparency = 0.4
+				l.TextColor3 = Color3.new(1, 1, 1)
+				l.TextScaled = true
+				l.Font = Enum.Font.Gotham
+				l.Parent = gui
+				prompt.Triggered:Connect(function()
+					i = i % #lines + 1
+					l.Text = lines[i]
+					gui.Enabled = true
+					task.delay(4, function()
+						gui.Enabled = false
+					end)
+				end)
+			end
+		end
+	end
+
+	-- ---------- music scaffold ----------
+	local MUSIC_ID = "" -- isi asset ID musik sendiri (mis. "rbxassetid://...")
+	if MUSIC_ID ~= "" then
+		local s = Instance.new("Sound")
+		s.SoundId = MUSIC_ID
+		s.Looped = true
+		s.Volume = 0.4
+		s.Parent = workspace.SpawnLocation or workspace
+		s:Play()
+	end
+end)
+
+-- ================= delivery rep + streetlight night mode =================
+pcall(function()
+	-- Rep for courier legs (pizza rep is handled in its own handler below)
+	for houseName, pad in pairs(dropPads) do
+		pad.Touched:Connect(function(hit)
+			local player = getPlayer(hit)
+			if not player or jobs[player] ~= houseName then return end
+			local ls = player:FindFirstChild("leaderstats")
+			local rep = ls and ls:FindFirstChild("Rep")
+			if rep then
+				rep.Value += 2
+			end
+		end)
+	end
+
+	-- pizza deliveries via the same drop pads
+	for houseName, pad in pairs(dropPads) do
+		pad.Touched:Connect(function(hit)
+			local player = getPlayer(hit)
+			if not player then return end
+			local pj = pizzaJobs[player]
+			if not pj or pj.target ~= houseName then return end
+			local ls = player:FindFirstChild("leaderstats")
+			local cash = ls and ls:FindFirstChild("Cash")
+			if not cash then return end
+			cash.Value += 40
+			local rep = ls and ls:FindFirstChild("Rep")
+			if rep then
+				rep.Value += 2
+			end
+			pj.left -= 1
+			if pj.left <= 0 then
+				cash.Value += 150
+				pizzaJobs[player] = nil
+				detachBox(player)
+				setJobText(player,
+					"Semua pizza terkirim! +$150 bonus")
+				task.delay(4, function()
+					if not pizzaJobs[player] then
+						setJobText(player, nil)
+					end
+				end)
+			else
+				local names = {}
+				for hn in pairs(dropPads) do
+					table.insert(names, hn)
+				end
+				pj.target = names[math.random(#names)]
+				setJobText(player,
+					"+$40 — antar ke: " .. pj.target)
+			end
+		end)
+	end
+
+	-- streetlights: on at night, off at day
+	local bulbs = {}
+	for _, p in ipairs(workspace:GetDescendants()) do
+		if p:IsA("BasePart") and p.Name == "StreetLightBulb" then
+			local light = Instance.new("PointLight")
+			light.Brightness = 1.4
+			light.Range = 34
+			light.Color = Color3.fromRGB(255, 225, 160)
+			light.Enabled = false
+			light.Parent = p
+			table.insert(bulbs, { p, light })
+		end
+	end
+	task.spawn(function()
+		while true do
+			local hour = Lighting.ClockTime
+			local night = hour < 6 or hour > 18
+			for _, entry in ipairs(bulbs) do
+				entry[1].Material = night and Enum.Material.Neon
+					or Enum.Material.Glass
+				entry[2].Enabled = night
+			end
+			task.wait(2)
 		end
 	end)
 end)

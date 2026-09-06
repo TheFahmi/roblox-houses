@@ -443,6 +443,12 @@ def f_bathroom(h, x, y, z, roty=0):
               transparency=0.25, roty=roty, cancollide=False))
     H(h, part("MirrorFrame", (2.5, 3.3, 0.1), (mx, y + 4.2, mz + 0.05), GOLD,
               FOIL, roty=roty, cancollide=False))
+    # shower over the tub (interactive via HouseLogic)
+    sx2, sz2 = r(1.9, 0)
+    H(h, part("Shower", (0.5, 0.5, 0.5), (sx2, y + 4.9, sz2), SILVER, METAL,
+              roty=roty))
+    H(h, part("ShowerPole", (0.25, 2.4, 0.25), (sx2, y + 3.6, sz2), SILVER,
+              METAL, roty=roty, cancollide=False))
 
 
 def f_stairs(h, x, y, z, steps=10, rise=1.1, run_=1.1, w=4, dirz=1,
@@ -1634,6 +1640,183 @@ def build_Penthouse(cx, cz, FY, hname):
     H(h, part("OwnerSignPlate", (5.6, 2.6, 0.15), (cx + 12, FY + 6, cz
               - 15.25), GOLD, FOIL, cancollide=False))
 
+
+
+# ================================================================ CITY BLOCK
+# East of plaza: car shop, cafe, grocery, hospital, police HQ, pizza place.
+
+
+def _city_shell(h, x, z, w, d, color, name, sign_text, fy):
+    """Generic shop shell: floor, walls w/ storefront, roof, lit sign."""
+    H(h, part(f"{name}Lot", (w + 10, 0.2, d + 10), (x, 0.1, z), (150, 150,
+              148), CONCRETE))
+    H(h, part(f"{name}Floor", (w, 0.5, d), (x, fy - 0.25, z), MARBLEC,
+              MARBLE))
+    H(h, part(f"{name}WallBack", (w, 10, 0.5), (x, fy + 5, z + d / 2), color,
+              SMOOTH))
+    H(h, part(f"{name}WallL", (0.5, 10, d), (x - w / 2, fy + 5, z), color,
+              SMOOTH))
+    H(h, part(f"{name}WallR", (0.5, 10, d), (x + w / 2, fy + 5, z), color,
+              SMOOTH))
+    gw = (w - 14) / 2
+    H(h, part(f"{name}StoreL", (gw, 9, 0.4), (x - 7 - gw / 2, fy + 4.5,
+              z - d / 2), GLASSC, GLASS, transparency=0.35))
+    H(h, part(f"{name}StoreR", (gw, 9, 0.4), (x + 7 + gw / 2, fy + 4.5,
+              z - d / 2), GLASSC, GLASS, transparency=0.4))
+    H(h, part(f"{name}Header", (w, 1, 0.5), (x, fy + 9.5, z - d / 2), color,
+              SMOOTH))
+    H(h, part(f"{name}Roof", (w + 1, 0.6, d + 1), (x, fy + 10.2, z), (120,
+              120, 126), SMOOTH))
+    H(h, part(f"{name}SignBoard", (w - 6, 2.2, 0.3), (x, fy + 8.1,
+              z - d / 2 - 0.3), (30, 30, 34), SMOOTH))
+    for i, ch in enumerate(sign_text):
+        H(h, part(f"{name}SignC{i}", (0.8, 1.2, 0.2),
+                  (x - (len(sign_text) - 1) * 0.45 + i * 0.9, fy + 8.1,
+                   z - d / 2 - 0.5), GOLD, NEON, cancollide=False))
+    f_door(h, x, fy, z - d / 2, w=6, hgt=7, color=DARKWOOD)
+
+
+def f_streetlight(h, x, z):
+    H(h, part("StreetLightPole", (0.4, 16, 0.4), (x, 8, z), (40, 40, 44),
+              METAL))
+    H(h, part("StreetLightArm", (0.4, 0.4, 3), (x, 15.8, z - 1.5), (40, 40,
+              44), METAL, cancollide=False))
+    H(h, part("StreetLightHead", (1, 0.5, 1.6), (x, 15.4, z - 2.8), (40, 40,
+              44), METAL, cancollide=False))
+    H(h, part("StreetLightBulb", (0.8, 0.3, 1.2), (x, 15.05, z - 2.8),
+              (255, 235, 170), NEON, cancollide=False))
+
+
+def f_busstop(h, x, z, roty=0):
+    ca, sa = math.cos(math.radians(roty)), math.sin(math.radians(roty))
+
+    def r(dx, dz):
+        return (x + dx * ca, z + dx * sa)
+    px, pz = r(-2.5, 0)
+    H(h, part("BusStopPole", (0.35, 9, 0.35), (px, 4.5, pz), (40, 40, 44),
+              METAL))
+    H(h, part("BusStopSign", (2.6, 3, 0.3), (px, 7.6, pz), (40, 90, 200),
+              PLASTIC, roty=roty))
+    H(h, part("BusStopMark", (1.4, 0.5, 0.35), (px, 8.2, pz), (240, 240,
+              240), PLASTIC, roty=roty, cancollide=False))
+    bx, bz = r(1.5, 0)
+    H(h, part("BusStopBench", (4, 0.4, 1.6), (bx, 1.6, bz), (110, 52, 38),
+              WOOD, roty=roty))
+    for lx in (-1.7, 1.7):
+        H(h, part("BusStopLeg", (0.3, 1.4, 1.4), (bx + lx, 0.7, bz), (40,
+                  40, 44), METAL, cancollide=False))
+
+
+def f_npc(h, x, z, roty, shirt, pants, skin):
+    H(h, part("NPCLeg", (1.2, 2.6, 1.2), (x - 0.65, 1.3, z), pants, FABRIC))
+    H(h, part("NPCLeg", (1.2, 2.6, 1.2), (x + 0.65, 1.3, z), pants, FABRIC))
+    H(h, part("NPCTorso", (2.8, 2.8, 1.4), (x, 4, z), shirt, FABRIC))
+    H(h, part("NPCHead", (2, 2, 2), (x, 6.4, z), skin, PLASTIC))
+    H(h, part("NPCFace", (1.2, 0.5, 0.2), (x, 6.6, z - 1.05), (30, 30, 30),
+              SMOOTH, cancollide=False))
+    H(h, part("NPCArm", (1.1, 2.6, 1.1), (x + 2.1, 4, z), shirt, FABRIC))
+    H(h, part("NPCArm", (1.1, 2.6, 1.1), (x - 2.1, 4, z), shirt, FABRIC))
+
+
+def build_city():
+    global h
+    h = "CityBlock"
+    fy = 0.5
+    _city_shell(h, 60, -18, 30, 20, (250, 210, 120), "CarShop", "TOKO MOBIL", fy)
+    for px in (-6, 6):
+        H(h, part(f"ShopPad{px}", (9, 0.3, 15), (60 + px, fy + 0.15, -18),
+                  (70, 70, 74), SMOOTH))
+        f_carport_car(h, 60 + px, fy, -18,
+                      color=(200, 60, 60) if px < 0 else (60, 90, 200))
+    H(h, part("ShopCounter", (10, 3, 1.5), (60, fy + 1.5, -22), DARKWOOD,
+              WOOD))
+    H(h, part("ShopCounterTop", (10.6, 0.3, 2), (60, fy + 3.1, -22), GOLD,
+              FOIL))
+
+    _city_shell(h, 105, -18, 24, 18, (150, 100, 70), "Cafe", "KAFE KOTA", fy)
+    H(h, part("CafeCounter", (8, 3, 1.5), (105, fy + 1.5, -20), DARKWOOD,
+              WOOD))
+    H(h, part("CafeTop", (8.6, 0.3, 2), (105, fy + 3.1, -20), (150, 100, 70),
+              WOOD))
+    for px in (-2.5, 0, 2.5):
+        H(h, part("CafeStool", (0.9, 2.4, 0.9), (105 + px, fy + 1.2, -17.5),
+                  (110, 52, 38), PLASTIC, shape=CYL, rotz=90))
+    for px in (-6, 0, 6):
+        f_sofa(h, 105 + px, fy, 2, (120, 90, 60), w=4)
+        f_coffee_table(h, 105 + px, fy, 0, w=2.6, mat=WOOD, color=WOODC,
+                       leg=BRONZE)
+
+    _city_shell(h, 148, -18, 24, 18, (90, 140, 90), "Grocery",
+                "TOKO KELONTONG", fy)
+    for px in (-7, -3.5, 0, 3.5, 7):
+        H(h, part("GroceryShelf", (3, 5, 1.5), (148 + px, fy + 2.5, -20),
+                  (70, 70, 76), PLASTIC))
+        for r in range(3):
+            H(h, part("GroceryItem", (2.4, 0.7, 1.2), (148 + px,
+                      fy + 1.6 + r * 1.4, -20.4), BOOK_COLORS[r % 8],
+                      PLASTIC, cancollide=False))
+    H(h, part("GroceryCounter", (6, 3, 1.5), (148, fy + 1.5, -16), DARKWOOD,
+              WOOD))
+
+    _city_shell(h, 60, 24, 28, 20, (240, 240, 245), "Hospital", "RUMAH SAKIT", fy)
+    H(h, part("HospCrossV", (1.2, 4.5, 0.3), (60, fy + 8.4, 14.2),
+              (220, 40, 40), NEON, cancollide=False))
+    H(h, part("HospCrossH", (4.5, 1.2, 0.3), (60, fy + 8.4, 14.2),
+              (220, 40, 40), NEON, cancollide=False))
+    for px in (-6, 6):
+        H(h, part("HospBed", (3, 1.2, 6.5), (60 + px, fy + 0.6, 24),
+                  (240, 240, 250), PLASTIC))
+        H(h, part("HospBedHead", (3, 2.2, 0.4), (60 + px, fy + 1.7, 27),
+                  (200, 200, 210), PLASTIC, cancollide=False))
+    H(h, part("HospDesk", (8, 3, 1.5), (60, fy + 1.5, 18), MARBLEC, MARBLE))
+
+    _city_shell(h, 105, 24, 26, 20, (70, 80, 150), "PoliceHQ",
+                "KANTOR POLISI", fy)
+    H(h, part("HQGaragePad", (12, 0.3, 16), (105, fy + 0.15, 24), (70, 70,
+              74), SMOOTH))
+    H(h, part("HQDesk", (8, 3, 1.5), (105, fy + 1.5, 18), (40, 40, 46),
+              METAL))
+    for px in (-5, 5):
+        H(h, part("HQLocker", (2.5, 7, 1.5), (105 + px, fy + 3.5, 26),
+                  (50, 60, 90), METAL))
+
+    _city_shell(h, 148, 24, 24, 18, (180, 80, 50), "PizzaPlace", "PIZZA KOTA", fy)
+    H(h, part("PizzaOven", (4, 4.5, 3), (140, fy + 2.25, 26), (80, 40, 36),
+              BRICK))
+    H(h, part("PizzaOvenFire", (2.6, 1, 0.4), (140, fy + 2, 24.4), FLAME,
+              NEON, cancollide=False))
+    H(h, part("PizzaCounter", (8, 3, 1.5), (148, fy + 1.5, 18), DARKWOOD,
+              WOOD))
+    for px in (-2, 0, 2):
+        H(h, part("PizzaBox", (1.8, 0.5, 1.8), (148 + px, fy + 3.4, 18),
+                  (200, 170, 110), PLASTIC, cancollide=False))
+
+
+build_city()
+
+for i in range(6):
+    f_streetlight("Shared", -84, 80 + i * 130)
+for i in range(4):
+    f_streetlight("Shared", -80 - i * 60, 33)
+for i in range(3):
+    f_streetlight("Shared", 30 + i * 60, 33)
+
+f_busstop("Shared", 24, 12, 180)
+f_busstop("Shared", -70, 40, 90)
+f_busstop("Shared", 190, 88, 0)
+f_busstop("Shared", 246, 200, 0)
+f_busstop("Shared", 338, 312, 0)
+
+f_npc("Shared", 100, -15.5, 180, (150, 100, 70), (60, 60, 70),
+      (255, 204, 170))
+f_npc("Shared", 143, -15.5, 180, (90, 140, 90), (50, 50, 60),
+      (255, 204, 170))
+f_npc("Shared", 55, 20.5, 0, (240, 240, 250), (180, 220, 230),
+      (255, 204, 170))
+f_npc("Shared", 100, 20.5, 0, (40, 50, 100), (40, 50, 100), (255, 204, 170))
+f_npc("Shared", 143, 20.5, 0, (180, 80, 50), (60, 60, 60), (255, 204, 170))
+f_npc("Shared", 10, 8, 180, (200, 60, 60), (80, 80, 90), (255, 204, 170))
+f_npc("Shared", -10, 8, 0, (60, 110, 200), (70, 70, 80), (255, 204, 170))
 
 
 # ================================================================ complexes
