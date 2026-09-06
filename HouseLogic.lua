@@ -2019,8 +2019,8 @@ pcall(function()
 end)
 
 -- ================= metro: moving train between 4 stations ================
+local metroInfo = { at = 1, phase = "dwell", eta = 6, target = 2 }
 pcall(function()
-	-- collect the parked train parts
 	local trainParts = {}
 	for _, p in ipairs(workspace:GetDescendants()) do
 		if p:IsA("BasePart") and p.Name:match("^Train") then
@@ -2028,13 +2028,14 @@ pcall(function()
 		end
 	end
 
-	-- stop X positions (world): first TrainCar center aligns to st_x + 40
 	local STOPS = {
 		{ "Selatan", -323.75 },
 		{ "Plaza", -26.25 },
 		{ "Timur", 253.75 },
 		{ "Utara", 551.25 },
 	}
+	local SPEED = 34
+	local DWELL = 8
 
 	local function trainX()
 		for _, p in ipairs(trainParts) do
@@ -2045,11 +2046,15 @@ pcall(function()
 	end
 
 	local moving = false
-	local function goToStop(idx)
+	local function goToStop(idx, departBoard)
 		if moving then return end
 		moving = true
 		local delta = Vector3.new(STOPS[idx][2] - trainX(), 0, 0)
-		local dur = math.abs(delta.X) / 34
+		local dur = math.abs(delta.X) / SPEED
+		metroInfo.phase = "moving"
+		metroInfo.target = idx
+		metroInfo.eta = dur
+		metroInfo.etaAt = os.clock() + dur
 		for _, p in ipairs(trainParts) do
 			TweenService:Create(p, TweenInfo.new(dur,
 				Enum.EasingStyle.Linear),
@@ -2057,6 +2062,17 @@ pcall(function()
 		end
 		task.delay(dur + 0.1, function()
 			moving = false
+			metroInfo.at = idx
+			metroInfo.phase = "dwell"
+			metroInfo.eta = DWELL
+			metroInfo.etaAt = os.clock() + DWELL
+			-- arrival chime at the station
+			local chime = Instance.new("Sound")
+			chime.SoundId = "rbxasset://sounds/electronicpingshort.wav"
+			chime.Volume = 1
+			chime.Parent = workspace
+			chime:Play()
+			task.delay(2, function() chime:Destroy() end)
 		end)
 	end
 
@@ -2074,23 +2090,187 @@ pcall(function()
 		click.MaxActivationDistance = 30
 		click.Parent = btn
 		click.MouseClick:Connect(function()
-			goToStop(si)
+			if metroInfo.at == si and metroInfo.phase == "dwell" then
+				return
+			end
+			-- if moving toward si already, ignore; else queue jump:
+			if metroInfo.phase == "dwell" then
+				metroInfo.eta = 0.1
+				metroInfo.etaAt = os.clock() + 0.1
+			else
+				metroInfo.target = si
+			end
 		end)
 	end
 
-	-- shuttle: dwell 5s at each station, then run to the next
+	-- departure boards (one per station)
+	local boards = {}
+	for si, stop in ipairs(STOPS) do
+		local board = Instance.new("Part")
+		board.Name = "MetroBoard" .. si
+		board.Size = Vector3.new(10, 4, 0.4)
+		board.Color = Color3.fromRGB(20, 24, 30)
+		board.Anchored = true
+		board.CFrame = CFrame.new(stop[2] - 26, 12, -12.5)
+		board.Parent = workspace
+		local gui = Instance.new("SurfaceGui")
+		gui.Face = Enum.NormalId.Front
+		gui.Parent = board
+		local l = Instance.new("TextLabel")
+		l.Size = UDim2.new(1, 0, 1, 0)
+		l.BackgroundColor3 = Color3.fromRGB(8, 10, 14)
+		l.TextColor3 = Color3.fromRGB(120, 220, 120)
+		l.TextScaled = true
+		l.Font = Enum.Font.Code
+		l.Text = "..."
+		l.Parent = gui
+		boards[si] = l
+	end
+
+	-- tickets: kiosks sell, departure consumes (ride requires a ticket)
+	local function hasTicket(player)
+		return player:GetAttribute("MetroTicket") ~= nil
+	end
+
+	for si, stop in ipairs(STOPS) do
+		local kiosk = workspace:FindFirstChild("MKiosk_" .. STOPS[si][1],
+			true)
+		if kiosk then
+			local prompt = Instance.new("ProximityPrompt")
+			prompt.ActionText = "Beli Tiket ($5)"
+			prompt.ObjectText = "Kios Tiket"
+			prompt.HoldDuration = 0.3
+			prompt.Parent = kiosk
+			prompt.Triggered:Connect(function(player)
+				local ls = player:FindFirstChild("leaderstats")
+				local cash = ls and ls:FindFirstChild("Cash")
+				if not cash or cash.Value < 5 then return end
+				cash.Value -= 5
+				player:SetAttribute("MetroTicket", 1)
+			end)
+		end
+	end
+
+	-- shuttle loop with boarding phase + ticket check
+	local playerSeatWatch = function()
+		-- returns seated riders on the train
+		local riders = {}
+		for _, p in ipairs(workspace:GetDescendants()) do
+			if p:IsA("Seat") and p.Name == "TrainSeat"
+				and p.Occupant then
+				local pl = Players:GetPlayerFromCharacter(
+					p.Occupant.Parent)
+				if pl then
+					table.insert(riders, { pl, p })
+				end
+			end
+		end
+		return riders
+	end
+
 	task.spawn(function()
 		local i, dir = 1, 1
 		while true do
-			task.wait(5)
+			-- DWELL: boarding
+			metroInfo.at = i
+			metroInfo.phase = "dwell"
+			metroInfo.eta = DWELL
+			metroInfo.etaAt = os.clock() + DWELL
+			local left = DWELL
+			while left > 0 do
+				task.wait(0.5)
+				left = metroInfo.etaAt - os.clock()
+			end
+			-- ticket check at departure
+			for _, rider in ipairs(playerSeatWatch()) do
+				local pl, seat = rider[1], rider[2]
+				if not hasTicket(pl) then
+					local hum = pl.Character
+						and pl.Character:FindFirstChildOfClass(
+							"Humanoid")
+					if hum then
+						hum.Jump = true
+					end
+					local gui = Instance.new("BillboardGui")
+					gui.Size = UDim2.new(0, 240, 0, 50)
+					gui.StudsOffset = Vector3.new(0, 3, 0)
+					gui.AlwaysOnTop = true
+					gui.Parent = seat
+					local l = Instance.new("TextLabel")
+					l.Size = UDim2.new(1, 0, 1, 0)
+					l.BackgroundColor3 = Color3.fromRGB(120, 20, 20)
+					l.TextColor3 = Color3.new(1, 1, 1)
+					l.TextScaled = true
+					l.Font = Enum.Font.GothamBold
+					l.Text = "Tidak punya tiket!"
+					l.Parent = gui
+					task.delay(3, function() gui:Destroy() end)
+				else
+					pl:SetAttribute("MetroTicket", nil)
+				end
+			end
+			-- MOVE
 			local nxt = i + dir
 			if nxt < 1 or nxt > #STOPS then
 				dir = -dir
 				nxt = i + dir
 			end
-			goToStop(nxt)
-			task.wait(3)
+			metroInfo.phase = "moving"
+			metroInfo.target = nxt
+			local delta = Vector3.new(STOPS[nxt][2] - STOPS[i][2], 0, 0)
+			local dur = math.abs(delta.X) / SPEED
+			metroInfo.eta = dur
+			metroInfo.etaAt = os.clock() + dur
+			for _, p in ipairs(trainParts) do
+				TweenService:Create(p, TweenInfo.new(dur,
+					Enum.EasingStyle.Linear),
+					{ CFrame = p.CFrame + delta }):Play()
+			end
+			task.wait(dur + 0.1)
 			i = nxt
+		end
+	end)
+
+	-- boards + call buttons update every 0.5s
+	task.spawn(function()
+		while true do
+			for si, stop in ipairs(STOPS) do
+				local l = boards[si]
+				if l then
+					local txt
+					if metroInfo.phase == "dwell"
+						and metroInfo.at == si then
+						txt = string.format(
+							"STASIUN %s
+KERETA DI PERON — berangkat %ds",
+							stop[1],
+							math.max(0, math.ceil(
+								metroInfo.etaAt - os.clock())))
+					elseif metroInfo.phase == "moving"
+						and metroInfo.target == si then
+						txt = string.format(
+							"STASIUN %s
+KERETA MENDEKAT — tiba %ds",
+							stop[1],
+							math.max(0, math.ceil(
+								metroInfo.etaAt - os.clock())))
+					else
+						txt = string.format(
+							"STASIUN %s
+Kereta sedang di: %s",
+							stop[1], STOPS[metroInfo.at][1])
+					end
+					if l.Text ~= txt then
+						l.Text = txt
+					end
+				end
+			end
+			-- live eta countdown while dwelling
+			if metroInfo.phase == "dwell" then
+				metroInfo.eta = math.max(0,
+					metroInfo.etaAt - os.clock())
+			end
+			task.wait(0.5)
 		end
 	end)
 end)

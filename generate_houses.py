@@ -775,6 +775,24 @@ for st_name, st_x in METRO_STATIONS:
                      (st_x - 24, 15.5, -25.4), (30, 30, 34), SMOOTH))
     H("Shared", part(f"MStationSign2B_{st_name}", (20, 2.4, 0.4),
                      (st_x - 24, 15.5, 25.4), (30, 30, 34), SMOOTH))
+    # waiting amenities per station: benches, ticket kiosk, vending
+    for bx in (-36, -28):
+        H("Shared", part(f"MBench_{st_name}_{bx}", (6, 0.4, 1.8),
+                         (st_x + bx, 4.2, -10), (110, 52, 38), WOOD))
+        for lx in (-2.4, 2.4):
+            H("Shared", part("MBenchLeg", (0.4, 1.8, 1.6),
+                             (st_x + bx + lx, 3.1, -10), (40, 40, 44),
+                             METAL, cancollide=False))
+        H("Shared", part(f"MBenchBack_{st_name}_{bx}", (6, 1.6, 0.3),
+                         (st_x + bx, 5.4, -10.8), (110, 52, 38), WOOD,
+                         cancollide=False))
+    H("Shared", part(f"MKiosk_{st_name}", (4, 5, 3), (st_x - 40, 4.5, -20),
+                     (90, 140, 90), PLASTIC))
+    H("Shared", part(f"MKioskSign_{st_name}", (3, 1.2, 0.2),
+                     (st_x - 40, 7.6, -20), (255, 200, 40), NEON,
+                     cancollide=False))
+    H("Shared", part(f"MVend_{st_name}", (2.4, 6.5, 2), (st_x + 40, 5.25,
+                     -24), (200, 40, 40), SMOOTH))
     for si, ch in enumerate(st_name.upper()):
         H("Shared", part(f"MStationSignC_{st_name}_{si}", (1, 1.6, 0.2),
                          (st_x - 24 - (len(st_name) - 1) * 0.6
